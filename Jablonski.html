@@ -1,109 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title> Title </title>
-<style>
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Open Sans", arial, sans-serif;
-}
-
-h2{
-  padding: 0px;
-  margin: 0px;
-  text-align: center;
-}
-
-#applet_container {
-  background-color: green;
-  display: flex;
-  margin: 1%;
-}
-
-#transition_selection ul{
-  margin: 0;
-  margin-left: 10%;
-  list-style-type: none;
-  padding: 0;
-  font-size: 1.1em;
-}
-
-#transition_selection{
-  padding: 0;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  border: none;
-}
-
-#transition_selection legend{
-  font-size: 1.1em;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-#fluorophore_select{
-  width: 80%;
-  margin-top: 10px;
-  margin-left: 10%;
-  font-size: 1.1em;
-  background-color: white;
-  padding-left: 10px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-
-#menu_container {
-  flex: 0 0 30%;
-  background-color: lightgrey;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-}
-
-#menu_container p{
-  text-align: justify;
-  word-break:normal
-}
-
-#fluor-select_legend{
-  font-size: 1.1em;
-  font-weight: bold;
-}
-
-#form_container {
-  flex: 0 0 60%;
-  padding: 20px;;
-}
-
-#structure_container {
-  flex: 0 0 40%;
-}
-
-#canvas_container{
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0; bottom: 0; left: 0; right: 0;
-}
-
-#container_wrapper {
-  position: relative;
-  flex: 0 0 70%;
-  padding-top: 52.5%;
-  background-color: white;
-  box-sizing: border-box;
-}
-
-#input_form{
-
-}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible"
+        content="ie=edge">
+  <title> Title </title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script>
+  <link rel="stylesheet"
+        href="Jablonski.css">
 
 </head>
 
@@ -117,8 +25,11 @@ h2{
         <h2>Das Jablonski-Diagramm</h2>
         <p>Hier steht ein Text zum Jablonski-Diagramm, ich bin jedoch noch nicht sicher, welche Informationen sinnvoll sind.</p>
         <form id="input_form">
-          <label for="fluorophores" id="fluor-select_legend">Welcher Fluorophor soll dargestellt werden?</label>
-          <select name="fluorophores" id="fluorophore_select" onchange="changeFluorophore(this)">
+          <label for="fluorophores"
+                 id="fluor-select_legend">Welcher Fluorophor soll dargestellt werden?</label>
+          <select name="fluorophores"
+                  id="fluorophore_select"
+                  onchange="changeFluorophore(this)">
               <option value="TexasRed">TexasRed</option>
               <option value="Atto488">Atto488</option>
               <option value="YFP">YFP</option>
@@ -128,11 +39,18 @@ h2{
             <legend>Welcher Strahlungsübergang soll dargestellt werden?</legend>
             <ul>
               <li>
-                <input type="radio" checked id="fluorescence" name="transition" value="fluorescence">
+                <input type="radio"
+                       checked
+                       id="fluorescence"
+                       name="transition"
+                       value="fluorescence">
                 <label for="fluorescence">Fluoreszenz</label>
               </li>
               <li>
-                <input type="radio" id="phosphorescence" name="transition" value="phosphorescence">
+                <input type="radio"
+                       id="phosphorescence"
+                       name="transition"
+                       value="phosphorescence">
                 <label for="phosphorescence">Phosphoreszenz</label>
               </li>
             </ul>
@@ -144,367 +62,365 @@ h2{
   </div>
 
   <script>
+    "use strict";
 
-        var colorChange = 0xff0000;
+    var colorChange = 0xff0000;
 
-        function changeFluorophore(select){
-            switch(select.value){
-              case "TexasRed":
-                colorChange = 0xff0731;
-                break;
-              case "DAPI":
-                colorChange = 0x0900ff;
-                break;
-              case "Atto488":
-                colorChange = 0x39ff14;
-                break;
-              case "YFP":
-                colorChange = 0xffff00;
-                break;
-            }
+    function changeFluorophore(select) {
+      switch (select.value) {
+        case "TexasRed":
+          colorChange = 0xff0731;
+          break;
+        case "DAPI":
+          colorChange = 0x0900ff;
+          break;
+        case "Atto488":
+          colorChange = 0x39ff14;
+          break;
+        case "YFP":
+          colorChange = 0xffff00;
+          break;
+      }
+    }
+
+
+    var Application = PIXI.Application,
+      loader = PIXI.loader,
+      resources = PIXI.loader.resources,
+      Sprite = PIXI.Sprite,
+      TextureCache = PIXI.utils.TextureCache,
+      Rectangle = PIXI.Rectangle,
+      Container = PIXI.Container,
+      Graphics = PIXI.Graphics,
+      AnimatedSprite = PIXI.extras.AnimatedSprite,
+      Text = PIXI.Text;
+
+    var photonAnimation;
+    var canvas, photon, photon;
+    var drag = false;
+    var startpos;
+    var highBars, lowBars, tempBars, electron;
+    var allBars, interaction;
+    var barHeight = 2.5;
+    var startWidth = 800;
+    var startHeight = 600;
+    var scale;
+    var S1_text, S0_text, T1_text;
+
+    var app = new Application({
+      resolution: devicePixelRatio,
+      width: startWidth,
+      height: startHeight,
+      autoResize: true,
+      transparent: false,
+      antialias: true,
+      backgroundColor: 0xffffff,
+    });
+    app.stage.interactive = true;
+    interaction = app.renderer.plugins.interaction;
+
+    document
+      .querySelector("#canvas_container")
+      .appendChild(app.view);
+    window.addEventListener("resize", resize);
+
+    function init() {
+      loader
+        .add("photon_sprites.json")
+        .load(setup);
+
+      lowBars = new Bars(5, 100, 400, 225, 2.5, 1.25, 6);
+
+      highBars = new Bars(5, 100, 100, 225, 2.5, 1.25, 6);
+      tempBars = new Bars(5, 450, 200, 225, 2.5, 1.25, 6);
+
+      S1_text = new Text("S1", {
+        fontFamily: 'Arial Black',
+        fontSize: 25,
+        align: 'center'
+      });
+      S1_text.anchor.set(0.5, 0.5);
+      S1_text.position.set(highBars.x - 25, highBars.y + highBars.height / 2);
+
+      S0_text = new Text("S0", {
+        fontFamily: 'Arial Black',
+        fontSize: 25,
+        align: 'center'
+      });
+      S0_text.anchor.set(0.5, 0.5);
+      S0_text.position.set(lowBars.x - 25, lowBars.y + lowBars.height / 2);
+
+      T1_text = new Text("T1", {
+        fontFamily: 'Arial Black',
+        fontSize: 25,
+        align: 'center'
+      });
+      T1_text.anchor.set(0.5, 0.5);
+      T1_text.position.set(tempBars.x - 25, tempBars.y + tempBars.height / 2);
+
+      allBars = [highBars, lowBars, tempBars];
+
+      electron = new Graphics()
+        .beginFill(0x521515)
+        .drawCircle(0, 0, 10);
+
+      electron.x = lowBars.getLastChild().getGlobalPosition().x;
+      electron.y = lowBars.getLastChild().getGlobalPosition().y;
+      app
+        .stage
+        .addChild(S1_text, S0_text, T1_text, highBars.getContainer(), lowBars.getContainer(), tempBars.getContainer(), electron);
+
+      makeDraggable(electron);
+
+      app.ticker.add(function() {
+        TWEEN.update();
+      });
+    }
+
+    function setup() {
+      var frames = [];
+
+      for (var i = 1; i <= 8; i++) {
+        frames.push(PIXI.Texture.fromFrame("photon-sprite_fr" + i + ".png"));
+      }
+
+      photon = new AnimatedSprite(frames, true);
+      app.stage.addChild(photon);
+      photon.alpha = 0;
+      photon.scale.set(0.1);
+      photon.anchor.set(0, 0.5);
+      photon.animationSpeed = 0.3;
+      photon.rotation = Math.PI * 14 / 8;
+    }
+
+    function Bars(amount, posX, posY, width, height, radius, step) {
+      var margin = 1.2;
+      this.container = new Container();
+      (function() {
+        for (var i = 0; i < amount; i++) {
+
+          var bar = new Graphics()
+            .beginFill()
+            .drawRoundedRect(0, 0, width, height, radius)
+            .endFill();
+
+          bar.pivot.x = bar.width / 2;
+          bar.pivot.y = bar.height / 2;
+          bar.hitArea = new Rectangle(0, -height * margin / 2, width, height * (1 + margin));
+
+          bar.y = step * Math.pow(i, 1.9) + bar.pivot.y;
+          bar.x = 0 + bar.pivot.x;
+
+          bar.interactive = true;
+          bars.addChild(bar);
         }
+        bars.x = posX;
+        bars.y = posY;
+      })();
+      this.getFirstChild = function() {
+        return bars.children[0];
+      };
+      this.getLastChild = function() {
+        return bars.children[bars.children.length - 1];
+      };
+      this.getBars = function() {
+        return bars.children;
+      };
+    };
+
+    function mouseOut(event) {
+      event.currentTarget.scale.set(1, 1);
+    };
+
+    function makeDraggable(target) {
+      var startpos;
+      target.interactive = true;
+      target.on("mousedown", function(e) {
+        startpos = {
+          x: target.x,
+          y: target.y,
+        }
+        drag = target;
+      })
+      target.on("mouseup", function(e) {
+        drag = false;
+
+        target.x = startpos.x;
+        target.y = startpos.y;
+
+        var hit = interaction.hitTest(e.data.global, highBars);
+        if (hit) {
+          target.x = hit.getGlobalPosition().x / scale;
+          target.y = hit.getGlobalPosition().y / scale;
+          outBars(hit);
+          relaxateElectron(hit);
+        }
+      })
+      target.on("mousemove", function(e) {
+        if (drag) {
+          drag.position.x = e.data.global.x / scale;
+          drag.position.y = e.data.global.y / scale;
+          var hit = interaction.hitTest(e.data.global, highBars);
+          if (hit) {
+            overBars(hit);
+          }
+          highBars.children.forEach(function(bar) {
+            if (bar != hit) {
+              outBars(bar);
+            }
+          });
+
+        }
+      });
+    }
+
+    function overBars(bar) {
+      new TWEEN.Tween(bar).to({
+        height: barHeight * 2,
+      }, 100).start();
+    };
+
+    function outBars(bar) {
+      new TWEEN.Tween(bar).to({
+        height: barHeight,
+      }, 100).start();
+    }
+
+    function photonAnimation() {
+      photon.position.set(electron.x, electron.y);
+      photon.play();
+      var first = new TWEEN.Tween(photon).to({
+        x: "+20",
+        y: "-20",
+        alpha: 1,
+      }, 1000);
+      var second = new TWEEN.Tween(photon).to({
+        x: "+20",
+        y: "-20",
+      }, 1000);
+      var third = new TWEEN.Tween(photon).to({
+        x: "+20",
+        y: "-20",
+        alpha: 0,
+      }, 1000);
+
+      first.chain(second.chain(third));
+      return first.start();
+    }
+
+    function relaxateElectron(bar) {
+
+      function randomRelexation(bar, lowBars, i) {
+        var distance = (lowBars[i].getGlobalPosition().y - bar.getGlobalPosition().y) / scale;
+        var tweens = [];
+
+        tweens[0] = new TWEEN.Tween(electron).to({
+            y: "+" + distance / 2,
+          }, 3000)
+          .easing(TWEEN.Easing.Sinusoidal.In)
+          .delay(500)
+          .onComplete(photonAnimation);
+
+        tweens[1] = new TWEEN.Tween(electron).to({
+            y: "+" + distance / 2,
+          }, 3000)
+          .easing(TWEEN.Easing.Sinusoidal.Out);
+
+        tweens[0].chain(tweens[1]);
 
 
-        var Application = PIXI.Application,
-            loader = PIXI.loader,
-            resources = PIXI.loader.resources,
-            Sprite = PIXI.Sprite,
-            TextureCache = PIXI.utils.TextureCache,
-            Rectangle = PIXI.Rectangle,
-            Container = PIXI.Container,
-            Graphics = PIXI.Graphics;
+        return tweens;
+      }
 
-        var app, canvas, photon, anim;
-        var rotate = 0.01;
-        var drag = false;
-        var startpos;
-        var highBars, lowBars, tempBars, electron;
-        var allBars, interaction;
-        var barHeight = 2.5;
-        var startWidth = 800;
-        var startHeight = 600;
-        var scale;
+      var highTweens = createBarTweens(bar, highbars.children);
 
+      var randI = Math.floor(Math.random() * lowBars.children.length);
+      var randTweens = randomRelexation(highbars.children[highbars.children.length - 1], lowBars.children, randI);
+      randTweens[0].onStart(function() {
+        app.renderer.backgroundColor = colorChange;
+      })
+      randTweens[1].onComplete(function() {
+        app.renderer.backgroundColor = 0xffffff;
+      })
 
-        app = new PIXI.Application({
-                resolution: devicePixelRatio,
-                width: startWidth,
-                height: startHeight,
-                autoResize: true,
-                transparent: false,
-                antialias: true,
-                backgroundColor: 0xffffff,
+      var lowTweens = createBarTweens(lowBars.children[randI], lowBars.children);
+
+      var firstTween;
+
+      if (highTweens != null && highTweens.length != 0) {
+        firstTween = chain(highTweens, randTweens);
+      } else {
+        firstTween = randTweens[0];
+      }
+
+      if (lowTweens != null && lowTweens.length != 0) {
+        chain(randTweens, lowTweens);
+      }
+
+      firstTween.start();
+
+    }
+
+    function chain(firstTweens, secondTweens) {
+      if (Array.isArray(firstTweens)) {
+        if (Array.isArray(secondTweens)) {
+          firstTweens[firstTweens.length - 1].chain(secondTweens[0]);
+          return firstTweens[0];
+        } else {
+          firstTweens[firstTweens.length - 1].chain(secondTweens);
+          return firstTweens[0];
+        }
+      } else {
+        if (Array.isArray(secondTweens)) {
+          firstTweens.chain(secondTweens[0]);
+          return firstTweens;
+        } else {
+          firstTweens.chain(secondTweens);
+          return firstTweens;
+        }
+      }
+    }
+
+    function createBarTweens(startBar, bars) {
+      var tweenChain;
+      var distances;
+
+      distances = bars
+        .slice(bars.indexOf(startBar))
+        .map(function(bars, i, barArray) {
+          if (i + 1 < barArray.length) {
+            return barArray[i + 1].y - barArray[i].y;
+          }
         });
+      distances.pop();
 
-        document.querySelector("#canvas_container").appendChild(app.view);
-        window.addEventListener("resize", resize);
+      tweenChain = distances.map(function(distance) {
+        return new TWEEN.Tween(electron)
+          .to({
+            y: "+" + distance
+          }, 1000).easing(TWEEN.Easing.Sinusoidal.InOut).delay(500);
+      });
 
-        function resize(){
-            var parent = app.view.parentNode;
-
-            app.renderer.resize(parent.clientWidth, parent.clientHeight);
-
-
-
-            scale = parent.clientWidth/startWidth;
-            app.stage.scale.set(scale, scale);
-
+      tweenChain.forEach(function(tween, index, tweens) {
+        if (index + 1 < tweens.length) {
+          tweens[index] = tween.chain(tweens[index + 1]);
         }
+      });
 
-        resize();
+      return tweenChain;
+    }
 
-        function init() {
-            PIXI.settings.SCALE_MODE.DEFAULT = PIXI.SCALE_MODES.NEAREST;
+    function resize() {
+      var parent = app.view.parentNode;
 
+      app.renderer.resize(parent.clientWidth, parent.clientHeight);
 
-            interaction = app.renderer.plugins.interaction;
+      scale = parent.clientWidth / startWidth;
+      app.stage.scale.set(scale, scale);
+    }
 
-            app.stage.interactive = true;
-
-            loader.add("photon_sprites.json").load(setup);
-
-
-
-            lowBars = createBars(5, 100, 400, 225, 2.5, 1.25, 6);
-            highBars = createBars(5, 100, 100, 225, 2.5, 1.25, 6);
-            tempBars = createBars(5, 450, 200, 225, 2.5, 1.25, 6);
-
-            var highText = new PIXI.Text("S1", {
-                fontFamily: 'Arial Black',
-                fontSize: 25,
-                align: 'center'
-            });
-            highText.anchor.set(0.5, 0.5);
-            highText.position.set(highBars.x - 25, highBars.y + highBars.height / 2);
-
-            var lowText = new PIXI.Text("S0", {
-                fontFamily: 'Arial Black',
-                fontSize: 25,
-                align: 'center'
-            });
-            lowText.anchor.set(0.5, 0.5);
-            lowText.position.set(lowBars.x - 25, lowBars.y + lowBars.height / 2);
-
-            var tempText = new PIXI.Text("T1", {
-                fontFamily: 'Arial Black',
-                fontSize: 25,
-                align: 'center'
-            });
-            tempText.anchor.set(0.5, 0.5);
-            tempText.position.set(tempBars.x - 25, tempBars.y + tempBars.height / 2);
-
-
-            allBars = [highBars, lowBars, tempBars];
-
-            var lowestBar = lowBars.children[lowBars.children.length - 1];
-
-            electron = new Graphics()
-                .beginFill(0x521515)
-                .drawCircle(0, 0, 10);
-
-            electron.x = lowestBar.getGlobalPosition().x;
-            electron.y = lowestBar.getGlobalPosition().y;
-
-            app.stage.addChild(highText);
-            app.stage.addChild(lowText);
-            app.stage.addChild(tempText);
-            app.stage.addChild(highBars);
-            app.stage.addChild(lowBars);
-            app.stage.addChild(tempBars);
-            app.stage.addChild(electron);
-            makeDraggable(electron);
-
-            app.ticker.add(function() {
-              TWEEN.update();
-            });
-
-
-
-        }
-
-        function setup(){
-              var frames = [];
-
-              for(var i=1; i <= 8; i++){
-                frames.push(PIXI.Texture.fromFrame("photon-sprite_fr"+i+".png"));
-              }
-
-              anim = new PIXI.extras.AnimatedSprite(frames, true);
-              app.stage.addChild(anim);
-              anim.alpha = 0;
-              anim.scale.set(0.1);
-              anim.anchor.set(0,0.5);
-              anim.animationSpeed = 0.3;
-              anim.rotation=Math.PI*14/8;
-        }
-
-        function createBars(amount, posX, posY, width, height, radius, step) {
-            var bars = new Container();
-
-            for (var i = 0; i < amount; i++) {
-                var bar = new Graphics().beginFill().drawRoundedRect(0, 0, width, height, radius).endFill();
-                bar.pivot.x = bar.width / 2;
-                bar.pivot.y = bar.height / 2;
-                var margin = 1.2;
-                bar.hitArea = new Rectangle(0, -height * margin / 2, width, height * (1 + margin));
-
-                bar.y = step * Math.pow(i, 1.9) + bar.pivot.y;
-                bar.x = 0 + bar.pivot.x;
-
-                bar.interactive = true;
-                bars.addChild(bar);
-            }
-            bars.x = posX;
-            bars.y = posY;
-
-            return bars;
-        }
-
-        function mouseOut(event) {
-            event.currentTarget.scale.set(1, 1);
-        };
-
-        function makeDraggable(target) {
-            var startpos;
-            target.interactive = true;
-            target.on("mousedown", function(e) {
-                startpos = {
-                    x: target.x,
-                    y: target.y,
-                }
-                drag = target;
-            })
-            target.on("mouseup", function(e) {
-                drag = false;
-
-                target.x = startpos.x;
-                target.y = startpos.y;
-
-                var hit = interaction.hitTest(e.data.global, highBars);
-                if (hit) {
-                    target.x = hit.getGlobalPosition().x/scale;
-                    target.y = hit.getGlobalPosition().y/scale;
-                    outBars(hit);
-                    relaxateElectron(hit);
-                }
-            })
-            target.on("mousemove", function(e) {
-                if (drag) {
-                    drag.position.x = e.data.global.x/scale;
-                    drag.position.y = e.data.global.y/scale;
-                    var hit = interaction.hitTest(e.data.global, highBars);
-                    if (hit) {
-                        overBars(hit);
-                    }
-                    highBars.children.forEach(function(bar) {
-                        if (bar != hit) {
-                            outBars(bar);
-                        }
-                    });
-
-                }
-            });
-        }
-
-        function overBars(bar) {
-            new TWEEN.Tween(bar).to({
-                height: barHeight * 2,
-            }, 100).start();
-        };
-
-        function outBars(bar) {
-            new TWEEN.Tween(bar).to({
-                height: barHeight,
-            }, 100).start();
-        }
-
-        photonAnimation = function(){
-                  anim.position.set(electron.x, electron.y);
-                  anim.play();
-                  var first = new TWEEN.Tween(anim).to({
-                    x: "+20",
-                    y: "-20",
-                    alpha: 1,
-                  }, 1000);
-                  var second = new TWEEN.Tween(anim).to({
-                    x:"+20",
-                    y: "-20",
-                  }, 1000);
-                  var third = new TWEEN.Tween(anim).to({
-                    x:"+20",
-                    y: "-20",
-                    alpha: 0,
-                  }, 1000);
-
-                  first.chain(second.chain(third));
-            return first.start();
-        }
-
-        function relaxateElectron(bar) {
-
-            function randomRelexation(bar, lowBars, i) {
-                var distance = (lowBars[i].getGlobalPosition().y - bar.getGlobalPosition().y)/scale;
-                var tweens = [];
-
-                tweens[0] = new TWEEN.Tween(electron).to({
-                    y: "+" + distance/2,
-                }, 3000)
-                .easing(TWEEN.Easing.Sinusoidal.In)
-                .delay(500)
-                .onComplete(photonAnimation);
-
-                tweens[1] = new TWEEN.Tween(electron).to({
-                    y: "+" + distance/2,
-                }, 3000)
-                .easing(TWEEN.Easing.Sinusoidal.Out);
-
-                tweens[0].chain(tweens[1]);
-
-
-                return tweens;
-            }
-
-            var highBarsChildren = highBars.children;
-            var lowBarsChildren = lowBars.children;
-
-            var highTweens = createBarTweens(bar, highBarsChildren);
-
-            var randI = Math.floor(Math.random() * lowBarsChildren.length);
-            var randTweens = randomRelexation(highBarsChildren[highBarsChildren.length - 1], lowBarsChildren, randI);
-            randTweens[0].onStart(function(){
-                app.renderer.backgroundColor = colorChange;
-            })
-            randTweens[1].onComplete(function(){
-                app.renderer.backgroundColor = 0xffffff;
-            })
-
-            var lowTweens = createBarTweens(lowBarsChildren[randI], lowBarsChildren);
-
-            var firstTween;
-
-            if (highTweens != null && highTweens.length != 0) {
-                firstTween = chain(highTweens, randTweens);
-            } else {
-                firstTween = randTweens[0];
-            }
-
-            if (lowTweens != null && lowTweens.length != 0) {
-                chain(randTweens, lowTweens);
-            }
-
-            firstTween.start();
-
-        }
-
-        function chain(firstTweens, secondTweens) {
-            if (Array.isArray(firstTweens)) {
-                if (Array.isArray(secondTweens)) {
-                    firstTweens[firstTweens.length - 1].chain(secondTweens[0]);
-                    return firstTweens[0];
-                } else {
-                    firstTweens[firstTweens.length - 1].chain(secondTweens);
-                    return firstTweens[0];
-                }
-            } else {
-                if (Array.isArray(secondTweens)) {
-                    firstTweens.chain(secondTweens[0]);
-                    return firstTweens;
-                } else {
-                    firstTweens.chain(secondTweens);
-                    return firstTweens;
-                }
-            }
-        }
-
-        function createBarTweens(startBar, bars) {
-            var tweenChain;
-            var distances;
-
-            distances = bars
-                .slice(bars.indexOf(startBar))
-                .map(function(bars, i, barArray) {
-                    if (i + 1 < barArray.length) {
-                        return barArray[i + 1].y - barArray[i].y;
-                    }
-                });
-            distances.pop();
-
-            tweenChain = distances.map(function(distance) {
-                return new TWEEN.Tween(electron)
-                    .to({
-                        y: "+" + distance
-                    }, 1000).easing(TWEEN.Easing.Sinusoidal.InOut).delay(500);
-            });
-
-            tweenChain.forEach(function(tween, index, tweens) {
-                if (index + 1 < tweens.length) {
-                    tweens[index] = tween.chain(tweens[index + 1]);
-                }
-            });
-
-            return tweenChain;
-        }
-
-    </script>
+    resize();
+  </script>
 </body>
+
 </html>
