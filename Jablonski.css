@@ -4,19 +4,18 @@ body {
   font-family: "Open Sans", arial, sans-serif;
 }
 
-h2{
+h2 {
   padding: 0px;
   margin: 0px;
   text-align: center;
 }
 
 #applet_container {
-  background-color: green;
   display: flex;
   margin: 1%;
 }
 
-#transition_selection ul{
+#transition_selection ul {
   margin: 0;
   margin-left: 10%;
   list-style-type: none;
@@ -24,20 +23,20 @@ h2{
   font-size: 1.1em;
 }
 
-#transition_selection{
+#transition_selection {
   padding: 0;
   margin-top: 20px;
   margin-bottom: 20px;
   border: none;
 }
 
-#transition_selection legend{
+#transition_selection legend {
   font-size: 1.1em;
   font-weight: bold;
   margin-bottom: 10px;
 }
 
-#fluorophore_select{
+#fluorophore_select {
   width: 80%;
   margin-top: 10px;
   margin-left: 10%;
@@ -50,36 +49,28 @@ h2{
 
 #menu_container {
   flex: 0 0 30%;
-  background-color: lightgrey;
   box-sizing: border-box;
-  display: flex;
   flex-direction: column;
 }
 
-#menu_container p{
+#menu_container p {
   text-align: justify;
-  word-break:normal
+  word-break: normal
 }
 
-#fluor-select_legend{
+#fluor-select_legend {
   font-size: 1.1em;
   font-weight: bold;
 }
 
-#form_container {
-  flex: 0 0 60%;
-  padding: 20px;;
-}
-
-#structure_container {
-  flex: 0 0 40%;
-}
-
-#canvas_container{
+#canvas_container {
   position: absolute;
   width: 100%;
   height: 100%;
-  top: 0; bottom: 0; left: 0; right: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
 #container_wrapper {
@@ -88,4 +79,24 @@ h2{
   padding-top: 52.5%;
   background-color: white;
   box-sizing: border-box;
+}
+
+#text_box {
+  padding: 10px;
+  word-wrap: break-word;
+  background-color: white;
+  border: 4px solid red;
+  overflow: hidden;
+  font-size: 1.8vw;
+}
+
+#text_box h3 {
+  padding: 0px;
+  text-align: center;
+  margin: 0px;
+}
+
+#text_box p {
+  margin-bottom: 0px;
+  text-align: center;
 }
