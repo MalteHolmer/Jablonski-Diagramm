@@ -2,599 +2,499 @@
 <html lang="de">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible"
-        content="ie=edge">
-  <title> Title </title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pixi-filters@2.6.1/dist/pixi-filters.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.js"></script>
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-          integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-          crossorigin="anonymous"></script>
-  <link rel="stylesheet"
-        href="Jablonski.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> Title </title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-filters@2.6.1/dist/pixi-filters.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="Jablonski.css">
+    <script src="BarTweens.js"></script>
+    <script src="Bars.js"></script>
+    <script src="EmissionTweens.js"></script>
+    <script src="Ray.js"></script>
 
 </head>
 
 <body onload="init()">
-  <div id="applet_container">
-    <div id="container_wrapper">
-      <div id="canvas_container"></div>
-    </div>
-    <div id="menu_container">
-      <div id="form_container">
-        <div id="text_box"
-             lang="de">
-          <h3>Vibronische Energieabgabe</h3>
-          <p>Das Elektron gibt seine Schwingungsenergie ab.</p>
+    <div id="applet_container">
+        <div id="container_wrapper">
+            <div id="canvas_container"></div>
         </div>
-        <form id="input_form">
-          <label for="fluorophores"
-                 id="fluor-select_legend">Welcher Fluorophor soll dargestellt werden?</label>
-          <select name="fluorophores"
-                  id="fluorophore_select"
-                  onchange="changeFluorophore(this)">
+        <div id="menu_container">
+            <div id="form_container">
+                <div id="text_box" lang="de">
+                    <h3>Vibronische Energieabgabe</h3>
+                    <p>Das Elektron gibt seine Schwingungsenergie ab.</p>
+                </div>
+                <form id="input_form">
+                    <label for="fluorophores" id="fluor-select_legend">Welcher Fluorophor soll dargestellt werden?</label>
+                    <select name="fluorophores" id="fluorophore_select" onchange="changeFluorophore(this)">
               <option value="TexasRed">TexasRed</option>
               <option value="Atto488">Atto488</option>
               <option value="YFP">YFP</option>
               <option value="DAPI">DAPI</option>
           </select>
-        </form>
-      </div>
-      <div id="structure_container"></div>
+                </form>
+            </div>
+            <div id="structure_container"></div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    "use strict";
+    <script>
+        "use strict";
 
-    var colorChange = 0xff0000;
+        var colorChange = 0xff0000;
 
-    function changeFluorophore(select) {
-      switch (select.value) {
-        case "TexasRed":
-          colorChange = 0xff0731;
-          break;
-        case "DAPI":
-          colorChange = 0x0900ff;
-          break;
-        case "Atto488":
-          colorChange = 0x39ff14;
-          break;
-        case "YFP":
-          colorChange = 0xffff00;
-          break;
-      }
-    }
+        var Application = PIXI.Application,
+            loader = PIXI.loader,
+            resources = PIXI.loader.resources,
+            Sprite = PIXI.Sprite,
+            TextureCache = PIXI.utils.TextureCache,
+            Rectangle = PIXI.Rectangle,
+            Container = PIXI.Container,
+            Graphics = PIXI.Graphics,
+            AnimatedSprite = PIXI.extras.AnimatedSprite,
+            Text = PIXI.Text;
+
+        var canvas, photon, ray;
+        var drag = false,
+            tweening = false;
+        var laser;
+        var startpos;
+        var s1_bars, s0_bars, t1_bars, electron;
+        var interaction;
+        var startWidth = 800;
+        var startHeight = 600;
+        var scale;
+        var s1_text, s0_text, t1_text;
+        var fluorescence = true;
+        var ray, app;
 
 
-    var Application = PIXI.Application,
-      loader = PIXI.loader,
-      resources = PIXI.loader.resources,
-      Sprite = PIXI.Sprite,
-      TextureCache = PIXI.utils.TextureCache,
-      Rectangle = PIXI.Rectangle,
-      Container = PIXI.Container,
-      Graphics = PIXI.Graphics,
-      AnimatedSprite = PIXI.extras.AnimatedSprite,
-      Text = PIXI.Text;
 
-    var photonAnimation;
-    var canvas, photon, ray;
-    var drag = false,
-      tweening = false;
-    var laser;
-    var startpos;
-    var s1_bars, s0_bars, t1_bars, electron;
-    var interaction;
-    var startWidth = 800;
-    var startHeight = 600;
-    var scale;
-    var s1_text, s0_text, t1_text;
-    var fluorescence = true;
+        function init() {
 
-    var app = new Application({
-      resolution: devicePixelRatio,
-      width: startWidth,
-      height: startHeight,
-      autoResize: true,
-      transparent: false,
-      antialias: true,
-      backgroundColor: 0xffffff,
-    });
-    app.stage.interactive = true;
-    interaction = app.renderer.plugins.interaction;
-
-    document
-      .querySelector("#canvas_container")
-      .appendChild(app.view);
-    window.addEventListener("resize", resize);
-
-    window.addEventListener("resize", textResize);
-
-    function textResize() {
-      var text = document.getElementById("text_box");
-      text.style.height = text.clientWidth * 0.66 + "px";
-    }
-    textResize();
-
-    function showNewText(textInput) {
-      var text = $("#text_box");
-
-      text.fadeOut(1000, function() {
-        text.html(textInput);
-      });
-      text.fadeIn(1000);
-    }
-
-    function init() {
-      loader
-        .add([
-          "photon_sprites.json",
-          "Elektron.png",
-          "Laser.png",
-          "Auge.png"
-        ])
-        .load(setup);
-
-      s0_bars = new Bars(5, 475, 475, 150, 2.5, 1.25, 6);
-
-      s1_bars = new Bars(5, 375, 100, 150, 2.5, 1.25, 6);
-      t1_bars = new Bars(5, 575, 200, 150, 2.5, 1.25, 6);
-
-      s1_text = new Text("S1", {
-        fontFamily: 'Arial Black',
-        fontSize: 25,
-        align: 'center'
-      });
-      s1_text.anchor.set(0.5, 0.5);
-      s1_text.position.set(s1_bars.container.x - 25, s1_bars.container.y + s1_bars.container.height / 2);
-
-      s0_text = new Text("S0", {
-        fontFamily: 'Arial Black',
-        fontSize: 25,
-        align: 'center'
-      });
-      s0_text.anchor.set(0.5, 0.5);
-      s0_text.position.set(s0_bars.container.x - 25, s0_bars.container.y + s0_bars.container.height / 2);
-
-      t1_text = new Text("T1", {
-        fontFamily: 'Arial Black',
-        fontSize: 25,
-        align: 'center'
-      });
-      t1_text.anchor.set(0.5, 0.5);
-      t1_text.position.set(t1_bars.container.x - 25, t1_bars.container.y + t1_bars.container.height / 2);
-
-      app
-        .stage
-        .addChild(s1_text, s0_text, t1_text, s1_bars.container, s0_bars.container, t1_bars.container);
-
-      app.ticker.add(function() {
-        TWEEN.update();
-      });
-    }
-
-    function laserClicked() {
-      if (!tweening) {
-        showNewText("Laser regt Elektron an!");
-        var laser_start = {
-          x: laser.x + laser.width / 2,
-          y: laser.y,
-        };
-        ray.emitRay(0x00ff00, laser_start, toGlobal(s0_bars.getLastChild()));
-      }
-    }
-
-    function setup() {
-      var frames = [];
-
-      for (var i = 1; i <= 8; i++) {
-        frames.push(PIXI.Texture.fromFrame("photon-sprite_fr" + i + ".png"));
-      }
-
-      photon = new AnimatedSprite(frames, true);
-      app.stage.addChild(photon);
-      photon.alpha = 0;
-      photon.scale.set(0.175);
-      photon.anchor.set(0.5, 0.5);
-      photon.animationSpeed = 0.3;
-
-      laser = new Sprite(resources["Laser.png"].texture);
-      laser.scale.set(0.15, 0.15);
-      laser.anchor.set(0.5, 0.5);
-      laser.position.y = s0_bars.getLastChild().getGlobalPosition().y / scale;
-      laser.position.x = 100;
-      laser.interactive = true;
-      laser.on("click", laserClicked);
-
-      ray = new Ray();
-
-      var auge = new Sprite(resources["Auge.png"].texture);
-      auge.scale.set(0.1, 0.1);
-      auge.anchor.set(0.5, 0.5);
-      auge.position.set(100, 200);
-
-      electron = new Sprite(resources["Elektron.png"].texture);
-      electron.anchor.set(0.5, 0.5);
-      electron.position = toGlobal(s0_bars.getLastChild());
-      electron.scale.set(0.05, 0.05);
-      makeDraggable(electron);
-
-      app.stage.addChild(auge, laser, electron);
-    }
-
-    function Bars(amount, posX, posY, width, height, radius, step) {
-      this.container = new Container();
-      this.getFirstChild = function() {
-        return this.container.children[0];
-      };
-      this.getLastChild = function() {
-        return this.container.children[this.container.children.length - 1];
-      };
-      this.getBars = function() {
-        return this.container.children;
-      };
-
-      var margin = 1.2;
-      var bar;
-      for (var i = 0; i < amount; i++) {
-
-        bar = new Graphics()
-          .beginFill()
-          .drawRoundedRect(0, 0, width, height, radius)
-          .endFill();
-
-        bar.pivot.x = bar.width / 2;
-        bar.pivot.y = bar.height / 2;
-        bar.hitArea = new Rectangle(0, -height * margin / 2, width, height * (1 + margin));
-
-        bar.y = step * Math.pow(i, 1.9) + bar.pivot.y;
-        bar.x = 0 + bar.pivot.x;
-
-        bar.interactive = true;
-        this.container.addChild(bar);
-      }
-      this.container.x = posX;
-      this.container.y = posY;
-    };
-
-    function Ray() {
-      this.ray = new Graphics();
-
-      this.emitRay = function(color, start_pos, end_pos) {
-        this.ray.clear().beginFill(color).drawRoundedRect(0, 0, 0.01, 1.5, 0);
-        this.ray.position = start_pos;
-        this.ray.y -= this.ray.height / 2;
-
-        /*var filter = new PIXI.filters.GlowFilter(2, 2.5, 0, color, 0.5);
-        this.ray.filters = [filter];*/
-
-        var dist_x = end_pos.x - start_pos.x;
-        var total_time = 500;
-        var total_movement = dist_x + 100;
-
-        var one = new TWEEN.Tween(this.ray).to({
-          width: "+200",
-        }, 200 / total_movement * total_time);
-        var two = new TWEEN.Tween(this.ray).to({
-          x: "+" + (dist_x - 200),
-        }, (dist_x - 200) / total_movement * total_time);
-        var three = new TWEEN.Tween(this.ray).to({
-          x: "+200",
-          width: "-200",
-        }, 200 / total_movement * total_time);
-
-        one.chain(two.chain(three));
-
-        one.onStart(function() {
-          tweening = true;
-        })
-        three.onComplete(function() {
-          var randBar = s1_bars.getBars()[Math.floor(Math.random() * s1_bars.getBars().length)];
-
-          var exciteTween = createTween(electron, electron.position, toGlobal(randBar), 1000, 500);
-
-          if (fluorescence) {
-            exciteTween.onComplete(function() {
-              fluorRelax(randBar);
+            app = new Application({
+                resolution: devicePixelRatio,
+                width: startWidth,
+                height: startHeight,
+                autoResize: true,
+                transparent: false,
+                antialias: true,
+                backgroundColor: 0xffffff,
             });
-          } else {
-            exciteTween.onComplete(function() {
-              phosRelax(randBar);
+            app.stage.interactive = true;
+            interaction = app.renderer.plugins.interaction;
+
+            document
+                .querySelector("#canvas_container")
+                .appendChild(app.view);
+
+
+            loader
+                .add([
+                    "photon_sprites.json",
+                    "Elektron.png",
+                    "Laser.png",
+                    "Auge.png"
+                ])
+                .load(setup);
+
+            s0_bars = new Bars(375, 475, (575 + 150) - 375, 2.5);
+
+            s1_bars = new Bars(375, 100, 150, 2.5);
+            t1_bars = new Bars(575, 200, 150, 2.5);
+
+            s1_text = new Text("S1", {
+                fontFamily: 'Arial Black',
+                fontSize: 25,
+                align: 'center'
             });
-          }
-          exciteTween.start();
-        })
+            s1_text.anchor.set(0.5, 0.5);
+            s1_text.position.set(s1_bars.container.x - 25, s1_bars.container.y + s1_bars.container.height / 2);
 
-        one.start();
-      }
+            s0_text = new Text("S0", {
+                fontFamily: 'Arial Black',
+                fontSize: 25,
+                align: 'center'
+            });
+            s0_text.anchor.set(0.5, 0.5);
+            s0_text.position.set(s0_bars.container.x - 25, s0_bars.container.y + s0_bars.container.height / 2);
 
-      app.stage.addChild(this.ray);
+            t1_text = new Text("T1", {
+                fontFamily: 'Arial Black',
+                fontSize: 25,
+                align: 'center'
+            });
+            t1_text.anchor.set(0.5, 0.5);
+            t1_text.position.set(t1_bars.container.x - 25, t1_bars.container.y + t1_bars.container.height / 2);
 
-    }
+            //Elektron wird als Kreis gezeichnet, es wird das unskalierte Koordinatensystem verwendet, da in diesem vor der Skalierung gezeichnet wird (nur getGlobalPosition statt toGlobal())
+            electron = new Graphics().beginFill(0xff0000).drawCircle(0, 0, 10);
+            electron.position.x = s1_bars.lastChild.getGlobalPosition().x;
+            electron.position.y = s0_bars.lastChild.getGlobalPosition().y;
+            makeDraggable(electron);
 
-    function makeDraggable(target) {
-      var scaling = function() {
-        var barHeight = 2.5;
+            app
+                .stage
+                .addChild(s1_text, s0_text, t1_text, s1_bars.container, s0_bars.container, t1_bars.container, electron);
 
-        return {
-          scaleUp: function(bar) {
-            new TWEEN.Tween(bar).to({
-              height: barHeight * 2,
-            }, 100).start();
-          },
-          scaleDown: function(bar) {
-            new TWEEN.Tween(bar).to({
-              height: barHeight,
-            }, 100).start();
-          },
-        };
-      }();
+            app.ticker.add(function() {
+                try {
+                    TWEEN.update();
+                } catch (e) {
 
-      target.interactive = true;
-      target.on("mousedown", function(e) {
-        if (!tweening) {
-          drag = target;
+                }
+            });
+
+            textResize();
+            resize();
         }
-      })
-      target.on("mouseup", function(e) {
-        drag = false;
 
-        target.x = s0_bars.getLastChild()
-          .getGlobalPosition().x / scale;
-        target.y = s0_bars.getLastChild()
-          .getGlobalPosition().y / scale;
+        function setup() {
+            var frames = [];
 
-        var hit = interaction.hitTest(e.data.global, s1_bars.container);
-        if (hit) {
-          target.x = hit.getGlobalPosition().x / scale;
-          target.y = hit.getGlobalPosition().y / scale;
-          scaling.scaleDown(hit);
-          phosRelax(hit);
-        }
-      })
-      target.on("mousemove", function(e) {
-        if (drag) {
-          drag.position.x = e.data.global.x / scale;
-          drag.position.y = e.data.global.y / scale;
-          var hit = interaction.hitTest(e.data.global, s1_bars.container);
-          if (hit) {
-            scaling.scaleUp(hit);
-          }
-          s1_bars.getBars().forEach(function(bar) {
-            if (bar != hit) {
-              scaling.scaleDown(bar);
+            for (var i = 1; i <= 8; i++) {
+                frames.push(PIXI.Texture.fromFrame("photon-sprite_fr" + i + ".png"));
             }
-          });
+
+            photon = new AnimatedSprite(frames, true);
+            app.stage.addChild(photon);
+            photon.alpha = 0;
+            photon.scale.set(0.175);
+            photon.anchor.set(0.5, 0.5);
+            photon.animationSpeed = 0.3;
+
+            laser = new Sprite(resources["Laser.png"].texture);
+            laser.scale.set(0.15, 0.15);
+            laser.anchor.set(0.5, 0.5);
+            laser.position.y = s0_bars.lastChild.getGlobalPosition().y / scale;
+            laser.position.x = 100;
+            laser.interactive = true;
+            laser.on("click", laserClicked);
+
+            var auge = new Sprite(resources["Auge.png"].texture);
+            auge.scale.set(0.1, 0.1);
+            auge.anchor.set(0.5, 0.5);
+            auge.position.set(100, 200);
+
+            app.stage.addChild(auge, laser, electron);
         }
-      });
-    }
 
-    function photonAnimation(start_pos, end_pos, duration) {
-      var x_sign, y_sign;
+        function fluorRelax(bar) {
+            var startTween;
 
-      photon.position.set(start_pos.x - photon.width / 2, start_pos.y + photon.height / 2); //account for size of animated photon!
-      photon.play();
+            var highTweens = new BarTweens(bar, s1_bars.children);
 
-      var x_dist = end_pos.x - start_pos.x + photon.width; //decrease by width to account for size of the animated photon
-      var y_dist = end_pos.y - start_pos.y;
+            var randBar = s0_bars.children[Math.floor(Math.random() * s0_bars.children.length)]; //select a random bar from the lowBars
 
-      x_sign = x_dist < 0 ? "" : "+";
-      y_sign = y_dist < 0 ? "" : "+";
+            var emisTweens = new EmissionTweens(electron, toGlobal(s1_bars.lastChild), {
+                x: toGlobal(s1_bars.lastChild).x,
+                y: toGlobal(randBar).y,
+            }, 3000);
 
-      photon.rotation = Math.PI + Math.atan(y_dist / x_dist);
+            var lowTweens = new BarTweens(randBar, s0_bars.children);
 
-      photon.filters = [new PIXI.filters.ColorReplaceFilter(0x000000, colorChange, 0.4)];
+            if (!highTweens.isEmpty()) {
+                highTweens.lastTween.chain(emisTweens.firstTween);
+                startTween = highTweens.firstTween;
+            } else {
+                startTween = emisTweens.firstTween;
+            }
 
-      var first = new TWEEN.Tween(photon).to({
-        x: x_sign + x_dist / 3,
-        y: y_sign + y_dist / 3,
-        alpha: 1,
-      }, duration / 3);
-      var second = new TWEEN.Tween(photon).to({
-        x: x_sign + x_dist / 3,
-        y: y_sign + y_dist / 3,
-      }, duration / 3);
-      var third = new TWEEN.Tween(photon).to({
-        x: x_sign + x_dist / 3,
-        y: y_sign + y_dist / 3,
-        alpha: 0,
-      }, duration / 3);
+            if (!lowTweens.isEmpty()) {
+                emisTweens.lastTween.chain(lowTweens.firstTween);
+            }
 
-      first.chain(second.chain(third));
-      first.start();
-    }
-
-    function createTween(object, start_pos, end_pos, duration, delay, easing) {
-      if (duration == null) {
-        duration = 1000;
-      }
-      if (delay == null) {
-        delay = 500;
-      }
-      if (easing == null) {
-        easing = TWEEN.Easing.Sinusoidal.InOut;
-      }
-      var x_dist = end_pos.x - start_pos.x;
-      var y_dist = end_pos.y - start_pos.y;
-
-      var x_sign = x_dist < 0 ? "" : "+";
-      var y_sign = y_dist < 0 ? "" : "+";
-
-      return new TWEEN.Tween(object).to({
-          x: x_sign + x_dist,
-          y: y_sign + y_dist,
-        }, duration)
-        .easing(easing).delay(delay);
-    }
-
-    function EmmissionTweens(object, start_pos, end_pos, duration, delay) {
-      this.tweens = [];
-      this.getFirstTween = function() {
-        return this.tweens[0];
-      };
-      this.getLastTween = function() {
-        return this.tweens[this.tweens.length - 1];
-      };
-
-      if (duration == null) {
-        duration = 1000;
-      }
-      if (delay == null) {
-        delay = 500;
-      }
-
-      var mid_pos = {
-        x: start_pos.x + (end_pos.x - start_pos.x) / 2,
-        y: start_pos.y + (end_pos.y - start_pos.y) / 2,
-      };
-
-      this.tweens.push(createTween(object, start_pos, mid_pos, duration / 2, delay, TWEEN.Easing.Sinusoidal.In));
-      this.tweens.push(createTween(object, mid_pos, end_pos,
-        duration / 2, 0, TWEEN.Easing.Sinusoidal.Out));
-
-      this.tweens[0].chain(this.tweens[1]);
-      this.tweens[0].onComplete(function() {
-        photonAnimation(mid_pos, {
-          x: 135, //empirisch ermittelt, wo das Zentrum des Auges ist, da Bild
-          y: 207,
-        }, 2000)
-      });
-    }
-
-    function BarTweens(startBar, bars) {
-      this.tweens = [];
-      this.positions = [];
-      this.text = "";
-      this.getFirstTween = function() {
-        return this.tweens[0];
-      };
-      this.getLastTween = function() {
-        return this.tweens[this.tweens.length - 1];
-      };
-      this.setText = function(text) {
-        this.text = text;
-      }
-
-      bars
-        .slice(bars.indexOf(startBar))
-        .forEach(function(bar, i, barArr) {
-          if (i < barArr.length - 1) {
-            var nextBar = barArr[i + 1];
-            this.tweens.push(createTween(electron, bar.position, nextBar.position));
-          }
-        }, this);
-
-      if (this.getFirstTween() != null) {
-        this.getFirstTween().onStart((function() {
-          tweening = true;
-          showNewText(this.text);
-        }).bind(this));
-      }
-      if (this.getLastTween() != null) {
-        this.getLastTween().onComplete(function() {
-          tweening = false;
-        })
-      }
-
-      this.tweens.forEach(function(tween, i, tweenArr) {
-        if (i < tweenArr.length - 1) {
-          tween.chain(tweenArr[i + 1]);
+            startTween.start();
         }
-      })
-    }
 
-    function fluorRelax(bar) {
-      var startTween;
+        function phosRelax(bar) {
+            var startTween;
 
-      var highTweens = new BarTweens(bar, s1_bars.getBars());
-      highTweens.setText("<h3>Vibronische Energieabgabe</h3>" +
-        "<p>Das Elektron gibt seine Schwingungsenergie ab.</p>");
+            var s1_tweens = new BarTweens(bar, s1_bars.children);
 
-      var randBar = s0_bars.getBars()[Math.floor(Math.random() * s0_bars.getBars().length)]; //select a random bar from the lowBars
+            var rand_t1 = t1_bars.children[Math.floor(Math.random() * t1_bars.children.length)]; //select a random bar from the t1_bars
 
-      var emisTweens = new EmmissionTweens(electron, {
-        x: s1_bars.getLastChild().getGlobalPosition().x / scale,
-        y: s1_bars.getLastChild().getGlobalPosition().y / scale,
-      }, {
-        x: randBar.getGlobalPosition().x / scale,
-        y: randBar.getGlobalPosition().y / scale,
-      }, 3000);
+            var s1_t1_tween = createTween(electron, toGlobal(s1_bars.lastChild), toGlobal(rand_t1));
 
-      var lowTweens = new BarTweens(randBar, s0_bars.getBars());
+            var t1_tweens = new BarTweens(rand_t1, t1_bars.children);
 
-      if (highTweens.getLastTween() != null) {
-        highTweens.getLastTween().chain(emisTweens.getFirstTween());
-        startTween = highTweens.getFirstTween();
-      } else {
-        startTween = emisTweens.getFirstTween();
-      }
+            var rand_s0 = s0_bars.children[Math.floor(Math.random() * s0_bars.children.length)]; //select a random bar from the s0_bars
 
-      emisTweens.getLastTween().chain(lowTweens.getFirstTween());
+            var t1_s0_tweens = new EmissionTweens(electron, toGlobal(t1_bars.lastChild), {
+                x: toGlobal(t1_bars.lastChild).x,
+                y: toGlobal(rand_s0).y,
+            }, 3000);
 
-      debugger
+            var s0_tweens = new BarTweens(rand_s0, s0_bars.children);
 
-      startTween.start();
-    }
+            if (s1_tweens.isEmpty()) {
+                startTween = s1_t1_tween;
+            } else {
+                startTween = s1_tweens.firstTween;
+                s1_tweens.lastTween.chain(s1_t1_tween);
+            }
 
-    function phosRelax(bar) {
-      var startTween;
+            if (t1_tweens.isEmpty()) {
+                s1_t1_tween.chain(t1_s0_tweens.firstTween);
+            } else {
+                s1_t1_tween.chain(t1_tweens.firstTween);
+                t1_tweens.lastTween.chain(t1_s0_tweens.firstTween);
+            }
 
-      var s1_tweens = new BarTweens(bar, s1_bars.getBars());
+            if (!s0_tweens.isEmpty()) {
+                t1_s0_tweens.lastTween.chain(s0_tweens.firstTween);
+            }
 
-      var rand_t1 = t1_bars.getBars()[Math.floor(Math.random() * t1_bars.getBars().length)]; //select a random bar from the t1_bars
+            if (s0_tweens.isEmpty()) {
+                t1_s0_tweens.lastTween.onComplete(function() {
+                    electron.position = {
+                        x: toGlobal(s1_bars.lastChild).x,
+                        y: toGlobal(s0_bars.lastChild).y,
+                    };
+                    tweening = false;
+                });
+            } else {
+                s0_tweens.lastTween.onComplete(function() {
+                    electron.position = {
+                        x: toGlobal(s1_bars.lastChild).x,
+                        y: toGlobal(s0_bars.lastChild).y,
+                    }
+                    tweening = false;
+                })
+            }
 
-      var s1_t1_tween = createTween(electron, toGlobal(s1_bars.getLastChild()), toGlobal(rand_t1));
+            startTween.start();
+        }
 
-      var t1_tweens = new BarTweens(rand_t1, t1_bars.getBars());
 
-      var rand_s0 = s0_bars.getBars()[Math.floor(Math.random() * s0_bars.getBars().length)]; //select a random bar from the s0_bars
 
-      var t1_s0_tweens = new EmmissionTweens(electron, toGlobal(t1_bars.getLastChild()), toGlobal(rand_s0), 3000);
+        //####KLEINE HILFSFUNKTIONEN################################
 
-      var s0_tweens = new BarTweens(rand_s0, s0_bars.getBars());
+        function toGlobal(bar) {
+            var pos = bar.getGlobalPosition();
+            return {
+                x: pos.x / scale,
+                y: pos.y / scale,
+            }
+        }
 
-      if (s1_tweens.getLastTween() == null) {
-        startTween = s1_t1_tween;
-      } else {
-        startTween = s1_tweens.getFirstTween();
-        s1_tweens.getLastTween().chain(s1_t1_tween);
-      }
+        function drawArrow(start_pos, end_pos, width, duration, delay, permanent) {
+            var length = end_pos.y - start_pos.y;
+            var arrowHeight = 1.5 * width * Math.tan(1 / 3 * Math.PI) //width*tan(60°)
+            arrowHeight = (length > 0) ? arrowHeight : -arrowHeight;
 
-      if (t1_tweens.getLastTween() == null) {
-        s1_t1_tween.chain(t1_s0_tweens.getFirstTween());
-      } else {
-        s1_t1_tween.chain(t1_tweens.getFirstTween());
-        t1_tweens.getLastTween().chain(t1_s0_tweens.getFirstTween());
-      }
-      t1_s0_tweens.getLastTween().chain(s0_tweens.getFirstTween());
+            length = length - arrowHeight;
 
-      startTween.start();
-    }
+            var graphics = new Graphics().beginFill(0x0000ff).drawRect(0, 0, width, length);
+            graphics.alpha = 0;
+            graphics.pivot.set(width / 2, 0);
+            graphics.position.copy(start_pos);
 
-    function toGlobal(bar) {
-      var pos = bar.getGlobalPosition();
-      return {
-        x: pos.x / scale,
-        y: pos.y / scale,
-      }
-    }
+            //Create the ArrowHead
 
-    function resize() {
-      var parent = app.view.parentNode;
+            graphics
+                .moveTo(-width, length)
+                .lineTo(width * 2, length)
+                .lineTo(width / 2, length + arrowHeight);
 
-      app.renderer.resize(parent.clientWidth, parent.clientHeight);
+            app.stage.addChild(graphics)
 
-      scale = parent.clientWidth / startWidth;
-      app.stage.scale.set(scale, scale);
-    }
+            var showTween = new TWEEN.Tween(graphics).to({
+                alpha: 1.0,
+            }, duration).delay(delay)
 
-    resize();
-  </script>
+            if (!permanent) {
+                var hideTween = new TWEEN.Tween(graphics).to({
+                    alpha: 0.0,
+                }, duration);
+                showTween.chain(hideTween);
+            }
+            showTween.start();
+        }
+
+        function createTween(object, start_pos, end_pos, duration = 1000, delay = 500, easing = TWEEN.Easing.Sinusoidal.InOut) {
+
+            var x_dist = end_pos.x - start_pos.x;
+            var y_dist = end_pos.y - start_pos.y;
+
+            var x_sign = x_dist < 0 ? "" : "+";
+            var y_sign = y_dist < 0 ? "" : "+";
+
+            var tween = new TWEEN.Tween(object).to({
+                    x: x_sign + x_dist,
+                    y: y_sign + y_dist,
+                }, duration)
+                .easing(easing).delay(delay);
+
+            return tween;
+        }
+
+        function photonAnimation(start_pos, end_pos, duration) {
+            var x_sign, y_sign;
+
+            photon.position.set(start_pos.x - photon.width / 2, start_pos.y + photon.height / 2); //account for size of animated photon!
+            photon.play();
+
+            var x_dist = end_pos.x - start_pos.x + photon.width; //decrease by width to account for size of the animated photon
+            var y_dist = end_pos.y - start_pos.y;
+
+            x_sign = x_dist < 0 ? "" : "+";
+            y_sign = y_dist < 0 ? "" : "+";
+
+            photon.rotation = Math.PI + Math.atan(y_dist / x_dist);
+
+            photon.filters = [new PIXI.filters.ColorReplaceFilter(0x000000, colorChange, 0.4)];
+
+            var first = new TWEEN.Tween(photon).to({
+                x: x_sign + x_dist / 3,
+                y: y_sign + y_dist / 3,
+                alpha: 1,
+            }, duration / 3);
+            var second = new TWEEN.Tween(photon).to({
+                x: x_sign + x_dist / 3,
+                y: y_sign + y_dist / 3,
+            }, duration / 3);
+            var third = new TWEEN.Tween(photon).to({
+                x: x_sign + x_dist / 3,
+                y: y_sign + y_dist / 3,
+                alpha: 0,
+            }, duration / 3);
+
+            first.chain(second);
+            second.chain(third);
+            first.start();
+        }
+
+        function showNewText(textInput) {
+            var text = $("#text_box");
+
+            text.fadeOut(1000, function() {
+                text.html(textInput);
+            });
+            text.fadeIn(1000);
+        }
+
+        function changeFluorophore(select) {
+            switch (select.value) {
+                case "TexasRed":
+                    colorChange = 0xff0731;
+                    break;
+                case "DAPI":
+                    colorChange = 0x0900ff;
+                    break;
+                case "Atto488":
+                    colorChange = 0x39ff14;
+                    break;
+                case "YFP":
+                    colorChange = 0xffff00;
+                    break;
+            }
+        }
+
+        //####EVENT-LISTENER und FUNKTIONEN##########################
+
+        function laserClicked() {
+            if (!tweening) {
+                if (ray == null) {
+                    let laser_start = {
+                        x: laser.x + laser.width / 2,
+                        y: laser.y,
+                    };
+
+                    let laser_end = {
+                        x: toGlobal(s1_bars.lastChild).x,
+                        y: toGlobal(s0_bars.lastChild).y,
+                    };
+
+                    ray = new Ray(colorChange, laser_start, laser_end, s1_bars);
+                } else if (ray.color !== colorChange) {
+                    ray.changeColor(colorChange);
+                }
+
+                ray.emitRay(fluorescence);
+                showNewText("Laser regt Elektron an!");
+            }
+        }
+
+        function resize() {
+            var parent = app.view.parentNode;
+
+            app.renderer.resize(parent.clientWidth, parent.clientHeight);
+
+            scale = parent.clientWidth / startWidth;
+            app.stage.scale.set(scale, scale);
+        };
+
+        function makeDraggable(target) {
+            var scaling = function() {
+                var barHeight = 2.5;
+
+                return {
+                    scaleUp: function(bar) {
+                        new TWEEN.Tween(bar).to({
+                            height: barHeight * 2,
+                        }, 100).start();
+                    },
+                    scaleDown: function(bar) {
+                        new TWEEN.Tween(bar).to({
+                            height: barHeight,
+                        }, 100).start();
+                    },
+                };
+            }();
+
+            target.interactive = true;
+            target.on("mousedown", function(e) {
+                if (!tweening) {
+                    drag = target;
+                }
+            })
+            target.on("mouseup", function(e) {
+                drag = false;
+
+                var hit = interaction.hitTest(e.data.global, s1_bars.container);
+                if (hit) {
+                    console.log("lbubb");
+                    target.x = toGlobal(hit).x;
+                    target.y = toGlobal(hit).y;
+                    scaling.scaleDown(hit);
+                    phosRelax(hit);
+                } else {
+                    target.x = toGlobal(s1_bars.lastChild).x;
+                    target.y = toGlobal(s0_bars.lastChild).y;
+                }
+            })
+            target.on("mousemove", function(e) {
+                if (drag) {
+                    drag.position.x = e.data.global.x / scale;
+                    drag.position.y = e.data.global.y / scale;
+                    var hit = interaction.hitTest(e.data.global, s1_bars.container);
+                    if (hit) {
+                        scaling.scaleUp(hit);
+                    }
+                    s1_bars.children.forEach(function(bar) {
+                        if (bar != hit) {
+                            scaling.scaleDown(bar);
+                        }
+                    });
+                }
+            });
+        }
+
+
+        function textResize() {
+            var text = document.getElementById("text_box");
+            text.style.height = text.clientWidth * 0.66 + "px";
+        }
+
+        window.addEventListener("resize", resize);
+        window.addEventListener("resize", textResize);
+    </script>
 </body>
 
 </html>
