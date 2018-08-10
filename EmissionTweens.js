@@ -29,7 +29,7 @@ class EmissionTweens {
             }, 2000);
         });
         this.firstTween.onStart(function () {
-            drawArrow(start_pos, end_pos, 5, duration, duration / 2);
+            drawArrow(start_pos, end_pos, 8, duration, 0, true);
         });
     }
 }

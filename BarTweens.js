@@ -48,13 +48,8 @@ class BarTweens {
 
         if(!this.isEmpty()) {
             this.firstTween.onStart(() => {
-                tweening = true; //globale Variable, vllt anders besser
                 showNewText(this.infoText);
             });
-
-            this.lastTween.onComplete(() => {
-                tweening = false;
-            })
         }
     }
 }

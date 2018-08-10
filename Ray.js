@@ -54,19 +54,14 @@ class Ray {
 
         this.emitTween.chain(this.travelTween);
         this.travelTween.chain(this.absorbTween);
-
-        this.emitTween.onStart(function () {
-            tweening = true;
-        });
-
     }
 
-    _exciteElectron(barsToJump, fluorescence) {
+    _exciteElectron(barsToJump, fluorescence, duration = 3000) {
         let randBar = barsToJump.getRandom();
         let firstElecPos = electron.position;
 
         //let exciteTween = createTween(electron, electron.position, toGlobal(randBar));
-        let exciteTween = createTween(electron, firstElecPos, toGlobal(randBar));
+        let exciteTween = createTween(electron, firstElecPos, toGlobal(randBar), duration);
 
         if(fluorescence) {
             exciteTween.onComplete(function () {
@@ -77,7 +72,9 @@ class Ray {
                 phosRelax(randBar);
             });
         }
-
+        exciteTween.onStart(function () {
+            drawArrow(firstElecPos, toGlobal(randBar), 8, duration);
+        });
 
         exciteTween.start();
     }
@@ -89,5 +86,6 @@ class Ray {
             .bind(this));
 
         this.emitTween.start();
+        this._createRayAnimation();
     }
 }

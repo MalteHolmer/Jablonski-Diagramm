@@ -1,102 +1,125 @@
 body {
-  margin: 0;
-  padding: 0;
-  font-family: "Open Sans", arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", arial, sans-serif;
 }
 
 h2 {
-  padding: 0px;
-  margin: 0px;
-  text-align: center;
+    padding: 0;
+    margin: 0;
+    text-align: center;
 }
 
 #applet_container {
-  display: flex;
-  margin: 1%;
+    display: flex;
+
+    padding: 1%;
+    border: 5px solid grey;
 }
 
 #transition_selection ul {
-  margin: 0;
-  margin-left: 10%;
-  list-style-type: none;
-  padding: 0;
-  font-size: 1.1em;
+    margin: 0;
+    margin-left: 10%;
+    list-style-type: none;
+    padding: 0;
+    font-size: 1.1em;
 }
 
 #transition_selection {
-  padding: 0;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  border: none;
+    padding: 0;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: none;
 }
 
 #transition_selection legend {
-  font-size: 1.1em;
-  font-weight: bold;
-  margin-bottom: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
-#fluorophore_select {
-  width: 80%;
-  margin-top: 10px;
-  margin-left: 10%;
-  font-size: 1.1em;
-  background-color: white;
-  padding-left: 10px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
+#side_container {
+    flex: 0 0 30%;
 
-#menu_container {
-  flex: 0 0 30%;
-  box-sizing: border-box;
-  flex-direction: column;
-}
+    box-sizing: border-box;
 
-#menu_container p {
-  text-align: justify;
-  word-break: normal
-}
+    display: flex;
 
-#fluor-select_legend {
-  font-size: 1.1em;
-  font-weight: bold;
+    flex-direction: column;
 }
 
 #canvas_container {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 
 #container_wrapper {
-  position: relative;
-  flex: 0 0 70%;
-  padding-top: 52.5%;
-  background-color: white;
-  box-sizing: border-box;
+    position: relative;
+    flex: 0 0 70%;
+    padding-top: 52.5%;
+    background-color: white;
+    box-sizing: border-box;
 }
 
 #text_box {
-  padding: 10px;
-  word-wrap: break-word;
-  background-color: white;
-  border: 4px solid red;
-  overflow: hidden;
-  font-size: 1.8vw;
+    flex: 0 0 33%;
+
+    padding: 10px;
+    word-wrap: break-word;
+    background-color: white;
+    border: 4px solid red;
+    overflow: hidden;
+    font-size: 1.8vw;
 }
 
-#text_box h3 {
-  padding: 0px;
-  text-align: center;
-  margin: 0px;
+h3 {
+    padding: 0;
+    text-align: center;
+    margin: 0;
 }
 
 #text_box p {
-  margin-bottom: 0px;
-  text-align: center;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+#menu_container {
+    display: flex;
+    flex: 1 0;
+    margin-top: 10px;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.menu-buttons {
+    display: block;
+
+    width: 90%;
+    margin: 10px auto;
+
+    background-color: rgb(9, 42, 107);
+    border: none;
+
+    color: white;
+    font-family: "Open Sans", arial, sans-serif;
+    font-size: 2vw;
+    line-height: 2em;
+    font-weight: bold;
+
+    transition: all 0.2s ease-in-out;
+}
+
+.menu-buttons:hover {
+    background-color: grey;
+
+    cursor: pointer;
+}
+
+#radiation-selector > .is-radiation-active {
+    background-color: grey;
 }

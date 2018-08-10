@@ -23,23 +23,18 @@
         <div id="container_wrapper">
             <div id="canvas_container"></div>
         </div>
-        <div id="menu_container">
-            <div id="form_container">
-                <div id="text_box" lang="de">
-                    <h3>Vibronische Energieabgabe</h3>
-                    <p>Das Elektron gibt seine Schwingungsenergie ab.</p>
-                </div>
-                <form id="input_form">
-                    <label for="fluorophores" id="fluor-select_legend">Welcher Fluorophor soll dargestellt werden?</label>
-                    <select name="fluorophores" id="fluorophore_select" onchange="changeFluorophore(this)">
-              <option value="TexasRed">TexasRed</option>
-              <option value="Atto488">Atto488</option>
-              <option value="YFP">YFP</option>
-              <option value="DAPI">DAPI</option>
-          </select>
-                </form>
+        <div id="side_container">
+            <div id="text_box" lang="de">
+                <h3>Das Jablonski-Diagramm</h3>
+                <p>Klicke auf den Laser oder ziehe das Elektron in einen der angeregten S1-Zustände.</p>
             </div>
-            <div id="structure_container"></div>
+            <div id="menu_container">
+                <div id="radiation-selector">
+                    <button class="is-radiation-active menu-buttons" id="fluoro">Fluoreszenz</button>
+                    <button class="menu-buttons" id="phosphor">Phosphoreszenz</button>
+                </div>
+                <button class="menu-buttons" id="reset">Zurücksetzen</button>
+            </div>
         </div>
     </div>
 
@@ -48,6 +43,7 @@
 
         var colorChange = 0xff0000;
 
+        //Shortcuts für die ganzen PIXI-Objekte
         var Application = PIXI.Application,
             loader = PIXI.loader,
             resources = PIXI.loader.resources,
@@ -59,21 +55,31 @@
             AnimatedSprite = PIXI.extras.AnimatedSprite,
             Text = PIXI.Text;
 
-        var canvas, photon, ray;
+        // globale booleans entscheidend für den Programm-Ablauf
         var drag = false,
-            tweening = false;
-        var laser;
-        var startpos;
-        var s1_bars, s0_bars, t1_bars, electron;
-        var interaction;
-        var startWidth = 800;
-        var startHeight = 600;
-        var scale;
+            fluorescence = true;
+
+        // Objekte (Sprites) auf die häufig zugegriffen wird
+        var laser, ray, photon, electron;
+
+        // Wichtigste Position, sehr häufig im Code
+        var electronStartPos;
+
+        // Texte und Balken im Diagramm
+        var s1_bars, s0_bars, t1_bars;
         var s1_text, s0_text, t1_text;
-        var fluorescence = true;
-        var ray, app;
 
+        // Pfeile im Diagramm
+        var arrows = [];
 
+        //interactions-Objekt für Hit-Detection
+        var interaction;
+
+        // globale Stage, ihre Größe und Skalierung des Ganzen
+        var app;
+        var startWidth = 800,
+            startHeight = 600;
+        var scale;
 
         function init() {
 
@@ -133,10 +139,26 @@
             t1_text.position.set(t1_bars.container.x - 25, t1_bars.container.y + t1_bars.container.height / 2);
 
             //Elektron wird als Kreis gezeichnet, es wird das unskalierte Koordinatensystem verwendet, da in diesem vor der Skalierung gezeichnet wird (nur getGlobalPosition statt toGlobal())
+            electronStartPos = {
+                scaled: {
+                    x: toGlobal(s1_bars.lastChild).x,
+                    y: toGlobal(s0_bars.lastChild).y
+                },
+                unscaled: {
+                    x: s1_bars.lastChild.getGlobalPosition().x,
+                    y: s0_bars.lastChild.getGlobalPosition().y
+                }
+            }
+
             electron = new Graphics().beginFill(0xff0000).drawCircle(0, 0, 10);
-            electron.position.x = s1_bars.lastChild.getGlobalPosition().x;
-            electron.position.y = s0_bars.lastChild.getGlobalPosition().y;
+            electron.position = electronStartPos.unscaled;
+            electron.interactive = true;
+            electron.cursor = "pointer";
             makeDraggable(electron);
+
+            document.getElementById("fluoro").onclick = fluorPhosToggle;
+            document.getElementById("phosphor").onclick = fluorPhosToggle;
+            document.getElementById("reset").onclick = resetAnimation;
 
             app
                 .stage
@@ -150,7 +172,6 @@
                 }
             });
 
-            textResize();
             resize();
         }
 
@@ -173,6 +194,7 @@
             laser.anchor.set(0.5, 0.5);
             laser.position.y = s0_bars.lastChild.getGlobalPosition().y / scale;
             laser.position.x = 100;
+            laser.cursor = "pointer";
             laser.interactive = true;
             laser.on("click", laserClicked);
 
@@ -228,7 +250,7 @@
             var t1_s0_tweens = new EmissionTweens(electron, toGlobal(t1_bars.lastChild), {
                 x: toGlobal(t1_bars.lastChild).x,
                 y: toGlobal(rand_s0).y,
-            }, 3000);
+            }, 3000, 1500);
 
             var s0_tweens = new BarTweens(rand_s0, s0_bars.children);
 
@@ -250,24 +272,6 @@
                 t1_s0_tweens.lastTween.chain(s0_tweens.firstTween);
             }
 
-            if (s0_tweens.isEmpty()) {
-                t1_s0_tweens.lastTween.onComplete(function() {
-                    electron.position = {
-                        x: toGlobal(s1_bars.lastChild).x,
-                        y: toGlobal(s0_bars.lastChild).y,
-                    };
-                    tweening = false;
-                });
-            } else {
-                s0_tweens.lastTween.onComplete(function() {
-                    electron.position = {
-                        x: toGlobal(s1_bars.lastChild).x,
-                        y: toGlobal(s0_bars.lastChild).y,
-                    }
-                    tweening = false;
-                })
-            }
-
             startTween.start();
         }
 
@@ -283,7 +287,8 @@
             }
         }
 
-        function drawArrow(start_pos, end_pos, width, duration, delay, permanent) {
+        /*Funktion zum Zeichnen von Pfeilen, wenn der Pfeil nach oben gezeichnet wird, wird ein negativer x-Offset eingefügt, andernfalls ein positiver x-Offset sodass es nie zu überschneidungen kommt*/
+        function drawArrow(start_pos, end_pos, width, duration = 3000, delay = 0, permanent = true, offset = 30) {
             var length = end_pos.y - start_pos.y;
             var arrowHeight = 1.5 * width * Math.tan(1 / 3 * Math.PI) //width*tan(60°)
             arrowHeight = (length > 0) ? arrowHeight : -arrowHeight;
@@ -293,20 +298,28 @@
             var graphics = new Graphics().beginFill(0x0000ff).drawRect(0, 0, width, length);
             graphics.alpha = 0;
             graphics.pivot.set(width / 2, 0);
-            graphics.position.copy(start_pos);
+            if (length > 0) {
+                graphics.x = start_pos.x + offset;
+                graphics.y = start_pos.y;
+            } else {
+                graphics.x = start_pos.x - offset;
+                graphics.y = start_pos.y;
+            }
 
             //Create the ArrowHead
-
             graphics
                 .moveTo(-width, length)
                 .lineTo(width * 2, length)
                 .lineTo(width / 2, length + arrowHeight);
 
-            app.stage.addChild(graphics)
+            arrows.push(graphics);
+
+            var indexElectron = app.stage.getChildIndex(electron);
+            app.stage.addChildAt(graphics, indexElectron);
 
             var showTween = new TWEEN.Tween(graphics).to({
                 alpha: 1.0,
-            }, duration).delay(delay)
+            }, duration).delay(delay).easing(TWEEN.Easing.Exponential.In)
 
             if (!permanent) {
                 var hideTween = new TWEEN.Tween(graphics).to({
@@ -330,7 +343,6 @@
                     y: y_sign + y_dist,
                 }, duration)
                 .easing(easing).delay(delay);
-
             return tween;
         }
 
@@ -398,27 +410,62 @@
 
         //####EVENT-LISTENER und FUNKTIONEN##########################
 
-        function laserClicked() {
-            if (!tweening) {
-                if (ray == null) {
-                    let laser_start = {
-                        x: laser.x + laser.width / 2,
-                        y: laser.y,
-                    };
+        /*Event-Listener zum Abfangen von Button-Clicks zur Auswahl von Fluoreszenz oder Phosphoreszenz-Darstellung*/
+        function resetAnimation() {
+            arrows.forEach(function(arrow) {
+                app.stage.removeChild(arrow);
+            });
 
-                    let laser_end = {
-                        x: toGlobal(s1_bars.lastChild).x,
-                        y: toGlobal(s0_bars.lastChild).y,
-                    };
+            TWEEN.removeAll();
 
-                    ray = new Ray(colorChange, laser_start, laser_end, s1_bars);
-                } else if (ray.color !== colorChange) {
-                    ray.changeColor(colorChange);
-                }
+            electron.position = electronStartPos.unscaled;
 
-                ray.emitRay(fluorescence);
-                showNewText("Laser regt Elektron an!");
+            electron.interactive = true;
+            laser.interactive = true;
+
+            showNewText("<h3>Das Jablonski-Diagramm</h3><p>Klicke auf den Laser oder ziehe das Elektron in einen der angeregten S1-Zustände.</p>");
+        }
+
+        function fluorPhosToggle(event) {
+            var fluoro_button = document.getElementById("fluoro");
+            var phosphor_button = document.getElementById("phosphor");
+
+            if (event.target == fluoro_button) {
+                fluoro_button.classList.add("is-radiation-active");
+                phosphor_button.classList.remove("is-radiation-active");
+
+                fluorescence = true;
+            } else {
+                phosphor_button.classList.add("is-radiation-active");
+                fluoro_button.classList.remove("is-radiation-active");
+
+                fluorescence = false;
             }
+        }
+
+        function laserClicked() {
+            //after the Laser has been clicked, no interaction should be possible
+            laser.interactive = false;
+            electron.interactive = false;
+
+            if (ray == null) {
+                let laser_start = {
+                    x: laser.x + laser.width / 2,
+                    y: laser.y,
+                };
+
+                let laser_end = {
+                    x: toGlobal(s1_bars.lastChild).x,
+                    y: toGlobal(s0_bars.lastChild).y,
+                };
+
+                ray = new Ray(colorChange, laser_start, laser_end, s1_bars);
+            } else if (ray.color !== colorChange) {
+                ray.changeColor(colorChange);
+            }
+
+            ray.emitRay(fluorescence);
+            showNewText("Laser regt Elektron an!");
         }
 
         function resize() {
@@ -448,25 +495,34 @@
                 };
             }();
 
-            target.interactive = true;
             target.on("mousedown", function(e) {
-                if (!tweening) {
-                    drag = target;
-                }
+                drag = target;
+                drag.scale.set(1.2);
             })
             target.on("mouseup", function(e) {
+                drag.scale.set(1.0);
                 drag = false;
 
                 var hit = interaction.hitTest(e.data.global, s1_bars.container);
                 if (hit) {
-                    console.log("lbubb");
+
+                    electron.interactive = false;
+                    laser.interactive = false;
+
                     target.x = toGlobal(hit).x;
                     target.y = toGlobal(hit).y;
+
                     scaling.scaleDown(hit);
-                    phosRelax(hit);
+
+                    drawArrow(electronStartPos.scaled, electron.position, 8);
+
+                    if (fluorescence) {
+                        fluorRelax(hit);
+                    } else {
+                        phosRelax(hit);
+                    }
                 } else {
-                    target.x = toGlobal(s1_bars.lastChild).x;
-                    target.y = toGlobal(s0_bars.lastChild).y;
+                    target.position = electronStartPos.unscaled;
                 }
             })
             target.on("mousemove", function(e) {
@@ -486,14 +542,7 @@
             });
         }
 
-
-        function textResize() {
-            var text = document.getElementById("text_box");
-            text.style.height = text.clientWidth * 0.66 + "px";
-        }
-
         window.addEventListener("resize", resize);
-        window.addEventListener("resize", textResize);
     </script>
 </body>
 
