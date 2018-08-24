@@ -76,18 +76,19 @@ class AnimationControl {
     let rand_s0 = s0_bars.getRandom();
     let rand_s1 = s1_bars.getRandom();
 
+    let laserStartText = "<h3>Anregung des Elektrons</h3><p>Das Elektron absorbiert ein Photon des Lasers. Es wird in einen der Schwingungszustände des energetisch höher liegenden S1-Zustands angeregt.</p>";
     let infoText_s1_s0 = "<h3>Fluoreszenz</h3><p>Das Elektron gibt Energie in Form von Strahlung ab. Dabei wechselt es in einen Schwingungszustand des Grundzustands.</p>";
 
     /*Initialisierung aller Tweens die für die Animation benötigt werden*/
 
-    let rayTween = new Ray(s0_bars, s1_bars, rand_s1, 0xff0000);
+    let rayTween = new Ray(s0_bars, s1_bars, rand_s1, laserStartText, 0xff0000);
 
     let tweens_s1 = new BarTweens(rand_s1, s1_bars.children);
 
     let tweens_s1_s0 = new EmissionTweens(toGlobal(s1_bars.lastChild), {
       x: electronStartPos.scaled.x,
       y: toGlobal(rand_s0).y,
-    }, infoText_s1_s0, 3000);
+    }, infoText_s1_s0, 3000, 2000);
 
     let tweens_s0 = new BarTweens(rand_s0, s0_bars.children);
 
@@ -107,12 +108,13 @@ class AnimationControl {
     let rand_t1 = t1_bars.getRandom();
     let rand_s1 = s1_bars.getRandom();
 
+    let laserStartText = "<h3>Anregung des Elektrons</h3><p>Das Elektron absorbiert ein Photon des Lasers. Es wird in einen der Schwingungszustände des energetisch höher liegenden S1-Zustands angeregt.</p>";
     let infoText_s1_t1 = "<h3>Interkombination</h3><p>Das Elektron wechselt strahlungslos in den angeregten Triplett-Zustand T1, die Multiplizität ändert sich.</p>";
     let infoText_t1_s0 = "<h3>Phosphoreszenz</h3><p>Das Elektron wechselt unter Emission eines Photons in einen Schwingungszustand des Grundzustands. Der Übergang ist spin-verboten, es können Sekunden vergehen bis er eintritt.</p>";
 
     /*Initialisierung aller Tweens für die Animation*/
 
-    let rayTween = new Ray(s0_bars, s1_bars, rand_s1, 0xff0000, 1000, 0);
+    let rayTween = new Ray(s0_bars, s1_bars, rand_s1, laserStartText, 0xff0000, 1000, 0);
 
     let tweens_s1 = new BarTweens(rand_s1, s1_bars.children);
 
@@ -126,7 +128,7 @@ class AnimationControl {
     let tweens_t1_s0 = new EmissionTweens(toGlobal(t1_bars.lastChild), {
       x: toGlobal(t1_bars.lastChild).x,
       y: toGlobal(rand_s0).y,
-    }, infoText_t1_s0, 3000, 1500, 0);
+    }, infoText_t1_s0, 3000, 4000, 1500, 0);
 
     let tweens_s0 = new BarTweens(rand_s0, s0_bars.children);
 

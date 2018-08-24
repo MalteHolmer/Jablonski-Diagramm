@@ -19,7 +19,7 @@ var Application = PIXI.Application,
 var animationControl;
 
 // Objekte (Sprites) auf die häufig zugegriffen wird
-var laser, ray, photon, electron;
+var laser, ray, photon, electron, auge;
 
 // Wichtigste Position, sehr häufig im Code
 var electronStartPos;
@@ -57,7 +57,7 @@ function init() {
 
   loader
     .add([
-          "photon_sprites.json",
+          "Photon-Sprites.json",
           "Elektron.png",
           "Laser.png",
           "Auge.png"
@@ -127,19 +127,6 @@ function init() {
 }
 
 function setup() {
-  var frames = [];
-
-  for (var i = 1; i <= 8; i++) {
-    frames.push(PIXI.Texture.fromFrame("photon-sprite_fr" + i + ".png"));
-  }
-
-  photon = new AnimatedSprite(frames, true);
-  app.stage.addChild(photon);
-  photon.alpha = 0;
-  photon.scale.set(0.175);
-  photon.anchor.set(0.5, 0.5);
-  photon.animationSpeed = 0.3;
-
   laser = new Sprite(resources["Laser.png"].texture);
   laser.scale.set(0.15, 0.15);
   laser.anchor.set(0.5, 0.5);
@@ -147,7 +134,7 @@ function setup() {
   laser.position.x = 100;
   laser.interactive = true;
 
-  var auge = new Sprite(resources["Auge.png"].texture);
+  auge = new Sprite(resources["Auge.png"].texture);
   auge.scale.set(0.1, 0.1);
   auge.anchor.set(0.5, 0.5);
   auge.position.set(100, 200);
@@ -227,42 +214,6 @@ function createTween(object, start_pos, end_pos, delay = 500, duration = 1000, e
   return tween;
 }
 
-function photonAnimation(start_pos, end_pos, duration) {
-  var x_sign, y_sign;
-
-  photon.position.set(start_pos.x - photon.width / 2, start_pos.y + photon.height / 2); //account for size of animated photon!
-  photon.play();
-
-  var x_dist = end_pos.x - start_pos.x + photon.width; //decrease by width to account for size of the animated photon
-  var y_dist = end_pos.y - start_pos.y;
-
-  x_sign = x_dist < 0 ? "" : "+";
-  y_sign = y_dist < 0 ? "" : "+";
-
-  photon.rotation = Math.PI + Math.atan(y_dist / x_dist);
-
-  photon.filters = [new PIXI.filters.ColorReplaceFilter(0x000000, colorChange, 0.4)];
-
-  var first = new TWEEN.Tween(photon).to({
-    x: x_sign + x_dist / 3,
-    y: y_sign + y_dist / 3,
-    alpha: 1,
-  }, duration / 3);
-  var second = new TWEEN.Tween(photon).to({
-    x: x_sign + x_dist / 3,
-    y: y_sign + y_dist / 3,
-  }, duration / 3);
-  var third = new TWEEN.Tween(photon).to({
-    x: x_sign + x_dist / 3,
-    y: y_sign + y_dist / 3,
-    alpha: 0,
-  }, duration / 3);
-
-  first.chain(second);
-  second.chain(third);
-  first.start();
-}
-
 function showNewText(textInput) {
   var text = $("#text_box");
 
@@ -338,12 +289,43 @@ function fluorPhosToggle(event) {
     fluoro_button.classList.add("is-active");
     phosphor_button.classList.remove("is-active");
 
+    changeDropdown(true);
     resetAnimation(true);
   } else {
     phosphor_button.classList.add("is-active");
     fluoro_button.classList.remove("is-active");
 
+    changeDropdown(false);
     resetAnimation(false);
+  }
+}
+
+//Change Drop-Down list from showing fluorophores to phosphores and back
+function changeDropdown(fluorescence) {
+  var fluorSelection = ["GFP", "YFP", "DAPI", "Texas Red"];
+  var phosSelection = ["value"];
+  var dropSelect = document.getElementById("fluorophores");
+
+  clearOptions(dropSelect);
+
+  if (fluorescence) {
+    fluorSelection.forEach(function (fluorophore) {
+      var option = document.createElement("option");
+      option.text = fluorophore;
+      dropSelect.add(option);
+    });
+  } else {
+    phosSelection.forEach(function (phosphor) {
+      var option = document.createElement("option");
+      option.text = phosphor;
+      dropSelect.add(option);
+    });
+  }
+
+  function clearOptions(selectBox) {
+    for (var i = selectBox.length - 1; i >= 0; i--) {
+      selectBox.remove(i);
+    }
   }
 }
 

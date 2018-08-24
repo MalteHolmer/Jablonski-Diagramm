@@ -24,6 +24,7 @@
   <script src="Bars.js"></script>
   <script src="BarTweens.js"></script>
   <script src="EmissionTweens.js"></script>
+  <script src="PhotonTweens.js"></script>
   <script src="Ray.js"></script>
   <script src="AnimationControl.js"></script>
 
@@ -43,27 +44,35 @@
         <p>Mit <i class="fas fa-step-forward"></i> kannst du dir einzelne Sequenzen genauer angucken.</p>
         <p>Die Animation kann mit <i class="fas fa-pause"></i> pausiert und mit <i class="fas fa-fast-backward"></i> zurückgesetzt werden.</p>
       </div>
-      <div id="menu_container">
-        <div id="radiation-selector">
-          <button class="is-active menu-buttons fluor-phos-toggle"
-                  id="fluoro">Fluoreszenz</button>
-          <button class="menu-buttons fluor-phos-toggle"
-                  id="phosphor">Phosphoreszenz</button>
-        </div>
-        <div id="control-menu">
-          <button class="menu-buttons"
-                  id="play"
-                  title="Spiele die ganze Animation"><i class="fas fa-play"></i></button>
-          <button class="menu-buttons"
-                  id="pause"
-                  title="Pausiere beim nächsten Schritt"><i class="fas fa-pause"></i></button>
-          <button class="menu-buttons"
-                  id="step"
-                  title="Ein Schritt weiter"><i class="fas fa-step-forward"></i></button>
-          <button class="menu-buttons"
-                  id="reset"
-                  title="Zurücksetzen"><i class="fas fa-fast-backward"></i></button>
-        </div>
+      <div id="control-menu">
+        <button class="menu-buttons"
+                id="play"
+                title="Spiele die ganze Animation"><i class="fas fa-play"></i></button>
+        <button class="menu-buttons"
+                id="pause"
+                title="Pausiere beim nächsten Schritt"><i class="fas fa-pause"></i></button>
+        <button class="menu-buttons"
+                id="step"
+                title="Ein Schritt weiter"><i class="fas fa-step-forward"></i></button>
+        <button class="menu-buttons"
+                id="reset"
+                title="Zurücksetzen"><i class="fas fa-fast-backward"></i></button>
+      </div>
+      <div id="radiation-selector">
+        <button class="is-active menu-buttons fluor-phos-toggle"
+                id="fluoro">Fluoreszenz</button>
+        <button class="menu-buttons fluor-phos-toggle"
+                id="phosphor">Phosphoreszenz</button>
+      </div>
+      <div id="fluorophor-selector">
+        <select name="fluorophores"
+                id="fluorophores">
+          <option value="GFP">GFP</option>
+          <option value="YFP">YFP</option>
+          <option value="Texas Red">Texas Red</option>
+          <option value="DAPI">DAPI</option>
+        </select>
+        <img src="Texas-Red.png">
       </div>
     </div>
   </div>
