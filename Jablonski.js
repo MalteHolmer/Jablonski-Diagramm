@@ -11,41 +11,43 @@ var absorptionColor = 0xffd200;
 var emissionColor = 0xff8900;
 
 var photonColors = {
-    "GFP": {
-        absorption: "0x00d5ff",
-        emission: "0x00ff00"
-    },
-    "DAPI": {
-        absorption: "0x610061",
-        emission: "0x00a9ff"
-    },
-    "Texas Red": {
-        absorption: "0xffd200",
-        emission: "0xff8900"
-    },
-    "YFP": {
-        absorption: "0x00ff28",
-        emission: "0x46ff00"
-    },
-    "Strontiumaluminat": {
-        absorption: "0x610061",
-        emission: "0x36ff00"
-    }
+  "GFP": {
+    absorption: "0x00d5ff",
+    emission: "0x00ff00"
+  },
+  "DAPI": {
+    absorption: "0x610061",
+    emission: "0x00a9ff"
+  },
+  "Texas Red": {
+    absorption: "0xffd200",
+    emission: "0xff8900"
+  },
+  "YFP": {
+    absorption: "0x00ff28",
+    emission: "0x46ff00"
+  },
+  "Strontiumaluminat": {
+    absorption: "0x610061",
+    emission: "0x36ff00"
+  }
 }
 
 //Shortcuts für die ganzen PIXI-Objekte
 var Application = PIXI.Application,
-    loader = PIXI.loader,
-    resources = PIXI.loader.resources,
-    Sprite = PIXI.Sprite,
-    Graphics = PIXI.Graphics,
-    AnimatedSprite = PIXI.extras.AnimatedSprite,
-    Text = PIXI.Text,
-    Container = PIXI.Container,
-    Rectangle = PIXI.Rectangle;
+  loader = PIXI.loader,
+  resources = PIXI.loader.resources,
+  Sprite = PIXI.Sprite,
+  Graphics = PIXI.Graphics,
+  AnimatedSprite = PIXI.extras.AnimatedSprite,
+  Text = PIXI.Text,
+  Container = PIXI.Container,
+  Rectangle = PIXI.Rectangle;
 
 // Animations-Kontroller für die Steuerung des Animationsablaufs
 var animationControl;
+var drag = false;
+var interaction;
 
 // Objekte (Sprites) auf die häufig zugegriffen wird
 var laser, ray, photon, electron, auge;
@@ -63,367 +65,469 @@ var tempGraphics = [];
 // globale Stage, ihre Größe und Skalierung des Ganzen
 var app;
 var startWidth = 800,
-    startHeight = 600;
+  startHeight = 600;
 var scale = 1;
+
+//enum for animationControl
+const playState = {
+  IDLE: 1,
+  PLAY: 2,
+  PAUSE: 3,
+  STEP: 4,
+  properties: {
+    1: {
+      name: "idle"
+    },
+    2: {
+      name: "play"
+    },
+    3: {
+      name: "pause"
+    },
+    4: {
+      name: "step"
+    }
+  }
+}
 
 function init() {
 
-    app = new Application({
-        resolution: devicePixelRatio,
-        width: startWidth,
-        height: startHeight,
-        autoResize: true,
-        transparent: false,
-        antialias: true,
-        backgroundColor: 0xffffff,
-    });
-    app.stage.interactive = true;
+  app = new Application({
+    resolution: devicePixelRatio,
+    width: startWidth,
+    height: startHeight,
+    autoResize: true,
+    transparent: false,
+    antialias: true,
+    backgroundColor: 0xffffff,
+  });
+  app.stage.interactive = true;
+  interaction = app.renderer.plugins.interaction;
 
-    document
-        .querySelector("#canvas_container")
-        .appendChild(app.view);
+  document
+    .querySelector("#canvas_container")
+    .appendChild(app.view);
 
 
-    loader
-        .add([
+  loader
+    .add([
           "images/Photon-Sprites.json",
           "images/Elektron.png",
           "images/Laser.png",
           "images/Auge.png"
         ])
-        .load(setup);
+    .load(setup);
 
-    s0_bars = new Bars(375, 475, (575 + 150) - 375, 2.5);
+  s0_bars = new Bars(375, 475, (575 + 150) - 375, 2.5);
 
-    s1_bars = new Bars(375, 100, 150, 2.5);
-    t1_bars = new Bars(575, 200, 150, 2.5);
+  s1_bars = new Bars(375, 100, 150, 2.5);
+  t1_bars = new Bars(575, 200, 150, 2.5);
 
-    s1_text = new Text("S1", {
-        fontFamily: 'Arial Black',
-        fontSize: 25,
-        align: 'center'
-    });
-    s1_text.anchor.set(0.5, 0.5);
-    s1_text.position.set(s1_bars.container.x - 25, s1_bars.container.y + s1_bars.container.height / 2);
+  s1_text = new Text("S1", {
+    fontFamily: 'Arial Black',
+    fontSize: 25,
+    align: 'center'
+  });
+  s1_text.anchor.set(0.5, 0.5);
+  s1_text.position.set(s1_bars.container.x - 25, s1_bars.container.y + s1_bars.container.height / 2);
 
-    s0_text = new Text("S0", {
-        fontFamily: 'Arial Black',
-        fontSize: 25,
-        align: 'center'
-    });
-    s0_text.anchor.set(0.5, 0.5);
-    s0_text.position.set(s0_bars.container.x - 25, s0_bars.container.y + s0_bars.container.height / 2);
+  s0_text = new Text("S0", {
+    fontFamily: 'Arial Black',
+    fontSize: 25,
+    align: 'center'
+  });
+  s0_text.anchor.set(0.5, 0.5);
+  s0_text.position.set(s0_bars.container.x - 25, s0_bars.container.y + s0_bars.container.height / 2);
 
-    t1_text = new Text("T1", {
-        fontFamily: 'Arial Black',
-        fontSize: 25,
-        align: 'center'
-    });
-    t1_text.anchor.set(0.5, 0.5);
-    t1_text.position.set(t1_bars.container.x - 25, t1_bars.container.y + t1_bars.container.height / 2);
+  t1_text = new Text("T1", {
+    fontFamily: 'Arial Black',
+    fontSize: 25,
+    align: 'center'
+  });
+  t1_text.anchor.set(0.5, 0.5);
+  t1_text.position.set(t1_bars.container.x - 25, t1_bars.container.y + t1_bars.container.height / 2);
 
-    //Elektron wird als Kreis gezeichnet, es wird das unskalierte Koordinatensystem verwendet, da in diesem vor der Skalierung gezeichnet wird (nur getGlobalPosition statt toGlobal())
-    electronStartPos = {
-        scaled: {
-            x: toGlobal(s1_bars.lastChild)
-                .x,
-            y: toGlobal(s0_bars.lastChild)
-                .y
-        },
-        unscaled: {
-            x: s1_bars.lastChild.getGlobalPosition()
-                .x,
-            y: s0_bars.lastChild.getGlobalPosition()
-                .y
-        }
+  //Elektron wird als Kreis gezeichnet, es wird das unskalierte Koordinatensystem verwendet, da in diesem vor der Skalierung gezeichnet wird (nur getGlobalPosition statt toGlobal())
+  electronStartPos = {
+    scaled: {
+      x: toGlobal(s1_bars.lastChild)
+        .x,
+      y: toGlobal(s0_bars.lastChild)
+        .y
+    },
+    unscaled: {
+      x: s1_bars.lastChild.getGlobalPosition()
+        .x,
+      y: s0_bars.lastChild.getGlobalPosition()
+        .y
     }
+  }
 
-    electron = new Graphics()
-        .beginFill(0xff0000)
-        .drawCircle(0, 0, 10);
-    electron.position = electronStartPos.unscaled;
-    electron.interactive = true;
+  electron = new Graphics()
+    .beginFill(0xff0000)
+    .drawCircle(0, 0, 10);
+  electron.position = electronStartPos.unscaled;
+  electron.interactive = true;
+  electron.cursor = "pointer";
+  setupElectronDrag(electron);
 
-    document.getElementById("fluoro")
-        .onclick = fluorPhosToggle;
-    document.getElementById("phosphor")
-        .onclick = fluorPhosToggle;
-    document.getElementById("fluorophores")
-        .onchange = fluoroSelection;
+  document.getElementById("fluoro")
+    .onclick = fluorPhosToggle;
+  document.getElementById("phosphor")
+    .onclick = fluorPhosToggle;
+  document.getElementById("fluorophores")
+    .onchange = fluoroSelection;
 
-    //Binde alle Control-Buttons an die control-Funktion
-    $("#control-menu")
-        .children()
-        .click(controlListener);
+  //Binde alle Control-Buttons an die control-Funktion
+  $("#control-menu")
+    .children()
+    .click(controlListener);
 
-    app
-        .stage
-        .addChild(s1_text, s0_text, t1_text, s1_bars.container, s0_bars.container, t1_bars.container, electron);
+  app
+    .stage
+    .addChild(s1_text, s0_text, t1_text, s1_bars.container, s0_bars.container, t1_bars.container, electron);
 
-    app.ticker.add(function () {
-        TWEEN.update();
-    });
+  app.ticker.add(function () {
+    TWEEN.update();
+  });
 
-    resize();
+  resize();
 }
 
 function setup() {
-    laser = new Sprite(resources["images/Laser.png"].texture);
-    laser.scale.set(0.15, 0.15);
-    laser.anchor.set(0.5, 0.5);
-    laser.position.y = s0_bars.lastChild.getGlobalPosition()
-        .y / scale;
-    laser.position.x = 100;
-    laser.interactive = true;
+  laser = new Sprite(resources["images/Laser.png"].texture);
+  laser.scale.set(0.15, 0.15);
+  laser.anchor.set(0.5, 0.5);
+  laser.position.y = s0_bars.lastChild.getGlobalPosition()
+    .y / scale;
+  laser.position.x = 100;
+  laser.interactive = true;
+  laser.on("click", laserClicked);
+  laser.cursor = "pointer";
 
-    auge = new Sprite(resources["images/Auge.png"].texture);
-    auge.scale.set(0.1, 0.1);
-    auge.anchor.set(0.5, 0.5);
-    auge.position.set(100, 200);
+  auge = new Sprite(resources["images/Auge.png"].texture);
+  auge.scale.set(0.1, 0.1);
+  auge.anchor.set(0.5, 0.5);
+  auge.position.set(100, 200);
 
-    app.stage.addChild(auge, laser, electron);
+  app.stage.addChild(auge, laser, electron);
 
-    animationControl = new AnimationControl(s0_bars, s1_bars, t1_bars, true);
+  animationControl = new AnimationControl(s0_bars, s1_bars, t1_bars, true);
+
+  setInterval(checkPlayState, 200);
+
+  function checkPlayState() {
+    var currentState = animationControl.getPlayState();
+
+    var buttons = $("#control-menu")
+      .children().removeClass("is-active");
+
+    if (currentState != playState.IDLE) {
+      $("#" + playState.properties[currentState].name).addClass("is-active");
+    }
+  }
 }
 
 //####KLEINE HILFSFUNKTIONEN################################
 
 function toGlobal(bar) {
-    var pos = bar.getGlobalPosition();
-    return {
-        x: pos.x / scale,
-        y: pos.y / scale
-    }
+  var pos = bar.getGlobalPosition();
+  return {
+    x: pos.x / scale,
+    y: pos.y / scale
+  }
 
 }
 
 /*Funktion zum Zeichnen von Pfeilen, wenn der Pfeil nach oben gezeichnet wird, wird ein negativer x-Offset eingefügt, andernfalls ein positiver x-Offset sodass es nie zu überschneidungen kommt*/
 function drawArrow(start_pos, end_pos, width, color, duration = 3000, delay = 0, permanent = true, offset = 30) {
-    var length = end_pos.y - start_pos.y;
-    var arrowHeight = 1.5 * width * Math.tan(1 / 3 * Math.PI) //width*tan(60°)
-    arrowHeight = (length > 0) ? arrowHeight : -arrowHeight;
+  var length = end_pos.y - start_pos.y;
+  var arrowHeight = 1.5 * width * Math.tan(1 / 3 * Math.PI) //width*tan(60°)
+  arrowHeight = (length > 0) ? arrowHeight : -arrowHeight;
 
-    length = length - arrowHeight;
+  length = length - arrowHeight;
 
-    console.log(typeof color);
-    console.log(color);
+  var graphics = new Graphics()
+    .beginFill(color)
+    .drawRect(0, 0, width, length);
+  graphics.alpha = 0;
+  graphics.pivot.set(width / 2, 0);
+  if (length > 0) {
+    graphics.x = start_pos.x + offset;
+    graphics.y = start_pos.y;
+  } else {
+    graphics.x = start_pos.x - offset;
+    graphics.y = start_pos.y;
+  }
 
-    var graphics = new Graphics()
-        .beginFill(color)
-        .drawRect(0, 0, width, length);
-    graphics.alpha = 0;
-    graphics.pivot.set(width / 2, 0);
-    if(length > 0) {
-        graphics.x = start_pos.x + offset;
-        graphics.y = start_pos.y;
-    } else {
-        graphics.x = start_pos.x - offset;
-        graphics.y = start_pos.y;
-    }
+  //Create the ArrowHead
+  graphics
+    .moveTo(-width, length)
+    .lineTo(width * 2, length)
+    .lineTo(width / 2, length + arrowHeight);
 
-    //Create the ArrowHead
-    graphics
-        .moveTo(-width, length)
-        .lineTo(width * 2, length)
-        .lineTo(width / 2, length + arrowHeight);
+  tempGraphics.push(graphics);
 
-    tempGraphics.push(graphics);
+  var indexElectron = app.stage.getChildIndex(electron);
+  app.stage.addChildAt(graphics, indexElectron);
 
-    var indexElectron = app.stage.getChildIndex(electron);
-    app.stage.addChildAt(graphics, indexElectron);
+  var showTween = new TWEEN.Tween(graphics)
+    .to({
+      alpha: 1.0,
+    }, duration)
+    .delay(delay)
+    .easing(TWEEN.Easing.Exponential.In)
 
-    var showTween = new TWEEN.Tween(graphics)
-        .to({
-            alpha: 1.0,
-        }, duration)
-        .delay(delay)
-        .easing(TWEEN.Easing.Exponential.In)
-
-    if(!permanent) {
-        var hideTween = new TWEEN.Tween(graphics)
-            .to({
-                alpha: 0.0,
-            }, duration);
-        showTween.chain(hideTween);
-    }
-    showTween.start();
+  if (!permanent) {
+    var hideTween = new TWEEN.Tween(graphics)
+      .to({
+        alpha: 0.0,
+      }, duration);
+    showTween.chain(hideTween);
+  }
+  showTween.start();
 }
 
 function createTween(object, start_pos, end_pos, delay = 500, duration = 1000, easing = TWEEN.Easing.Sinusoidal.InOut) {
 
-    var x_dist = end_pos.x - start_pos.x;
-    var y_dist = end_pos.y - start_pos.y;
+  var x_dist = end_pos.x - start_pos.x;
+  var y_dist = end_pos.y - start_pos.y;
 
-    var x_sign = x_dist < 0 ? "" : "+";
-    var y_sign = y_dist < 0 ? "" : "+";
+  var x_sign = x_dist < 0 ? "" : "+";
+  var y_sign = y_dist < 0 ? "" : "+";
 
-    var tween = new TWEEN.Tween(object)
-        .to({
-            x: x_sign + x_dist,
-            y: y_sign + y_dist,
-        }, duration)
-        .easing(easing)
-        .delay(delay);
-    return tween;
+  var tween = new TWEEN.Tween(object)
+    .to({
+      x: x_sign + x_dist,
+      y: y_sign + y_dist,
+    }, duration)
+    .easing(easing)
+    .delay(delay);
+  return tween;
 }
 
 function showNewText(textInput) {
-    var text = $("#text_box");
+  var text = $("#text_box");
 
-    if(text.html() != textInput) {
-        text.animate({
-            opacity: "0"
-        }, 500, function () {
-            text.html(textInput);
-        });
+  if (text.html() != textInput) {
+    text.animate({
+      opacity: "0"
+    }, 500, function () {
+      text.html(textInput);
+    });
 
-        text.animate({
-            opacity: "1"
-        }, 500);
-    }
+    text.animate({
+      opacity: "1"
+    }, 500);
+  }
+}
+
+function setInteraction(bool) {
+  laser.interactive = bool;
+  electron.interactive = bool;
 }
 
 //####EVENT-LISTENER und FUNKTIONEN##########################
 
 /*Event-Listener zum Abfangen von Button-Clicks zur Auswahl von Fluoreszenz oder Phosphoreszenz-Darstellung*/
 
+function laserClicked() {
+  //after the Laser has been clicked, no interaction should be possible
+  setInteraction(false);
+  animationControl.play();
+}
+
 function controlListener(event) {
 
-    function playAnimation() {
-        if(animationControl.isEmpty()) {
-            resetAnimation();
-        }
-        animationControl.play();
+  function playAnimation() {
+    if (animationControl.isEmpty()) {
+      resetAnimation();
     }
+    animationControl.play();
+  }
 
-    var buttons = $("#control-menu")
-        .children();
+  var active_id = $(event.currentTarget).attr("id");
 
-    var active = $(event.currentTarget);
-    var active_id = active.attr("id");
-
-    buttons.removeClass("is-active");
-    if(active_id == "play" || active_id == "pause") {
-        active.addClass("is-active");
-    }
-
-    switch(active.attr("id")) {
-        case "play":
-            playAnimation();
-            break;
-        case "pause":
-            animationControl.pause();
-            break;
-        case "step":
-            animationControl.step();
-            break;
-        case "reset":
-            resetAnimation();
-            break;
-    }
+  switch (active_id) {
+    case "play":
+      playAnimation();
+      break;
+    case "pause":
+      animationControl.pause();
+      break;
+    case "step":
+      animationControl.step();
+      break;
+    case "reset":
+      resetAnimation();
+      break;
+  }
 }
 
 function fluoroSelection(event) {
-    var pictureLinks = {
-        "path": "images/",
-        "Texas Red": "Texas-Red.png",
-        "DAPI": "DAPI.png",
-        "YFP": "YFP.jpg",
-        "GFP": "GFP.png"
-    }
-    var dropImage = document.getElementById("fluorophor-selector_img");
+  var pictureLinks = {
+    "path": "images/",
+    "Texas Red": "Texas-Red.png",
+    "DAPI": "DAPI.png",
+    "YFP": "YFP.jpg",
+    "GFP": "GFP.png"
+  }
+  var dropImage = document.getElementById("fluorophor-selector_img");
 
-    dropImage.src = pictureLinks["path"] + pictureLinks[event.target.value];
-    changePhotonColor(event.target.value);
+  dropImage.src = pictureLinks["path"] + pictureLinks[event.target.value];
+  changePhotonColor(event.target.value);
 }
 
 function changePhotonColor(substrate) {
-    emissionColor = photonColors[substrate]["emission"];
-    absorptionColor = photonColors[substrate]["absorption"];
-    resetAnimation(fluorescence);
+  emissionColor = photonColors[substrate]["emission"];
+  absorptionColor = photonColors[substrate]["absorption"];
+  resetAnimation(fluorescence);
 }
 
 function fluorPhosToggle(event) {
-    var fluoro_button = document.getElementById("fluoro");
-    var phosphor_button = document.getElementById("phosphor");
+  var fluoro_button = document.getElementById("fluoro");
+  var phosphor_button = document.getElementById("phosphor");
 
-    if(event.target == fluoro_button) {
-        fluorescence = true;
-        fluoro_button.classList.add("is-active");
-        phosphor_button.classList.remove("is-active");
+  if (event.target == fluoro_button) {
+    fluorescence = true;
+    fluoro_button.classList.add("is-active");
+    phosphor_button.classList.remove("is-active");
 
-        changeDropdown(fluorescence);
-    } else {
-        fluorescence = false;
-        phosphor_button.classList.add("is-active");
-        fluoro_button.classList.remove("is-active");
+    changeDropdown(fluorescence);
+  } else {
+    fluorescence = false;
+    phosphor_button.classList.add("is-active");
+    fluoro_button.classList.remove("is-active");
 
-        changeDropdown(fluorescence);
-    }
+    changeDropdown(fluorescence);
+  }
 }
 
 //Change Drop-Down list from showing fluorophores to phosphores and back
 function changeDropdown(fluorescence) {
-    var fluorSelection = ["Texas Red", "GFP", "YFP", "DAPI"];
-    var phosSelection = ["Strontiumaluminat"];
-    var dropSelect = document.getElementById("fluorophores");
-    var dropImage = document.getElementById("fluorophor-selector_img");
+  var fluorSelection = ["Texas Red", "GFP", "YFP", "DAPI"];
+  var phosSelection = ["Strontiumaluminat"];
+  var dropSelect = document.getElementById("fluorophores");
+  var dropImage = document.getElementById("fluorophor-selector_img");
 
-    clearOptions(dropSelect);
+  clearOptions(dropSelect);
 
-    if(fluorescence) {
-        fluorSelection.forEach(function (fluorophore) {
-            var option = document.createElement("option");
-            option.text = fluorophore;
-            dropSelect.add(option);
-        });
-        dropImage.src = "images/Texas-Red.png";
-        changePhotonColor("Texas Red");
-    } else {
-        phosSelection.forEach(function (phosphor, i) {
-            var option = document.createElement("option");
-            option.text = phosphor;
-            dropSelect.add(option);
-            if(i == 0) {
+  if (fluorescence) {
+    fluorSelection.forEach(function (fluorophore) {
+      var option = document.createElement("option");
+      option.text = fluorophore;
+      dropSelect.add(option);
+    });
+    dropImage.src = "images/Texas-Red.png";
+    changePhotonColor("Texas Red");
+  } else {
+    phosSelection.forEach(function (phosphor, i) {
+      var option = document.createElement("option");
+      option.text = phosphor;
+      dropSelect.add(option);
+      if (i == 0) {
 
-            }
-        });
-        dropImage.src = "images/Strontium-Aluminat.png";
-        changePhotonColor("Strontiumaluminat");
+      }
+    });
+    dropImage.src = "images/Strontium-Aluminat.png";
+    changePhotonColor("Strontiumaluminat");
+  }
+
+  function clearOptions(selectBox) {
+    for (var i = selectBox.length - 1; i >= 0; i--) {
+      selectBox.remove(i);
     }
-
-    function clearOptions(selectBox) {
-        for(var i = selectBox.length - 1; i >= 0; i--) {
-            selectBox.remove(i);
-        }
-    }
+  }
 }
 
 function resetAnimation(fluorescence) {
-    tempGraphics.forEach(function (temps) {
-        app.stage.removeChild(temps);
-    });
+  tempGraphics.forEach(function (temps) {
+    app.stage.removeChild(temps);
+  });
 
-    // Deaktiviere alle Kontroll-Buttons
-    $("#control-menu")
-        .children()
-        .removeClass("is-active");
+  // Deaktiviere alle Kontroll-Buttons
+  $("#control-menu")
+    .children()
+    .removeClass("is-active");
 
-    // fluorescence darf undefined sein, dann kommt es nicht zur Aenderung des Modus
-    animationControl.reset(fluorescence);
+  // fluorescence darf undefined sein, dann kommt es nicht zur Aenderung des Modus
+  animationControl.reset(fluorescence);
 
-    electron.position = electronStartPos.unscaled;
+  electron.position = electronStartPos.unscaled;
 
-    showNewText('<h3>Das Jablonski-Diagramm</h3><p>Klicke auf <i class="fas fa-play"></i> um die gesamte Animation abzuspielen.</p><p>Mit <i class="fas fa-step-forward"></i> kannst du dir einzelne Sequenzen genauer angucken.</p><p>Die Animation kann mit <i class="fas fa-pause"></i> pausert und mit <i class="fas fa-fast-backward"></i> zurückgesetzt werden<p>');
+  //erlaube drag and drop und klicken des lasers
+  setInteraction(true);
+
+  showNewText('<h3>Das Jablonski-Diagramm</h3><p>Klicke auf <i class="fas fa-play"></i> um die gesamte Animation abzuspielen.</p><p>Mit <i class="fas fa-step-forward"></i> kannst du dir einzelne Sequenzen genauer angucken.</p><p>Die Animation kann mit <i class="fas fa-pause"></i> pausert und mit <i class="fas fa-fast-backward"></i> zurückgesetzt werden<p>');
+}
+
+function setupElectronDrag(electron) {
+  var scaling = (function () {
+    var barHeight = 2.5;
+    return {
+      scaleUp: function (bar) {
+        new TWEEN.Tween(bar).to({
+          height: barHeight * 2,
+        }, 100).start();
+      },
+      scaleDown: function (bar) {
+        new TWEEN.Tween(bar).to({
+          height: barHeight,
+        }, 100).start();
+      },
+    };
+  })();
+  electron.interactive = true;
+  electron.on("mousedown", function (e) {
+    drag = electron;
+  });
+
+  electron.on("mouseup", function (e) {
+    var hit = interaction.hitTest(e.data.global, s1_bars.container);
+    var offset = 30;
+
+    drag = false;
+    electron.position = electronStartPos.scaled;
+
+    if (hit) {
+      electron.position = toGlobal(hit);
+      scaling.scaleDown(hit);
+
+      if (!fluorescence) {
+        offset = 0;
+      }
+
+      drawArrow(electronStartPos.scaled, toGlobal(hit), 8, absorptionColor, 1000, 0, true, offset);
+
+      animationControl.playDrag(hit);
+    }
+  });
+
+  electron.on("mousemove", function (e) {
+    if (drag) {
+      drag.position.x = e.data.global.x / scale;
+      drag.position.y = e.data.global.y / scale;
+
+      var hit = interaction.hitTest(e.data.global, s1_bars.container);
+      if (hit) {
+        scaling.scaleUp(hit);
+      }
+      s1_bars.children.forEach(function (bar) {
+        if (bar != hit) {
+          scaling.scaleDown(bar);
+        }
+      });
+    }
+  });
 }
 
 function resize() {
-    var parent = app.view.parentNode;
+  var parent = app.view.parentNode;
 
-    app.renderer.resize(parent.clientWidth, parent.clientHeight);
+  app.renderer.resize(parent.clientWidth, parent.clientHeight);
 
-    scale = parent.clientWidth / startWidth;
-    app.stage.scale.set(scale, scale);
+  scale = parent.clientWidth / startWidth;
+  app.stage.scale.set(scale, scale);
 }
 
 window.addEventListener("resize", resize);
