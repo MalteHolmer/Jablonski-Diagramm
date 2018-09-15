@@ -3,23 +3,15 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible"
-        content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title> Title </title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pixi-filters@2.6.1/dist/pixi-filters.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.js"></script>
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-          integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-          crossorigin="anonymous"></script>
-  <link rel="stylesheet"
-        href="Jablonski.css">
-  <link rel="stylesheet"
-        href="https://use.fontawesome.com/releases/v5.2.0/css/all.css"
-        integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ"
-        crossorigin="anonymous">
+  <script src="pixi.min.js"></script>
+  <script src="pixi-filters.js"></script>
+  <script src="Tween.js"></script>
+  <script src="jquery-3.3.1.min.js"></script>
+  <link rel="stylesheet" href="Jablonski.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
   <script src="Jablonski.js"></script>
   <script src="Bars.js"></script>
   <script src="BarTweens.js"></script>
@@ -37,44 +29,31 @@
       <div id="canvas_container"></div>
     </div>
     <div id="side_container">
-      <div id="text_box"
-           lang="de">
+      <div id="text_box" lang="de">
         <h3>Das Jablonski-Diagramm</h3>
         <p>Klicke auf <i class="fas fa-play"></i> um die gesamte Animation abzuspielen.</p>
         <p>Mit <i class="fas fa-step-forward"></i> kannst du dir einzelne Sequenzen genauer angucken.</p>
         <p>Die Animation kann mit <i class="fas fa-pause"></i> pausiert und mit <i class="fas fa-fast-backward"></i> zurückgesetzt werden.</p>
       </div>
       <div id="control-menu">
-        <button class="menu-buttons"
-                id="play"
-                title="Spiele die ganze Animation"><i class="fas fa-play"></i></button>
-        <button class="menu-buttons"
-                id="pause"
-                title="Pausiere beim nächsten Schritt"><i class="fas fa-pause"></i></button>
-        <button class="menu-buttons"
-                id="step"
-                title="Ein Schritt weiter"><i class="fas fa-step-forward"></i></button>
-        <button class="menu-buttons"
-                id="reset"
-                title="Zurücksetzen"><i class="fas fa-fast-backward"></i></button>
+        <button class="menu-buttons" id="play" title="Spiele die ganze Animation"><i class="fas fa-play"></i></button>
+        <button class="menu-buttons" id="pause" title="Pausiere beim nächsten Schritt"><i class="fas fa-pause"></i></button>
+        <button class="menu-buttons" id="step" title="Ein Schritt weiter"><i class="fas fa-step-forward"></i></button>
+        <button class="menu-buttons" id="reset" title="Zurücksetzen"><i class="fas fa-fast-backward"></i></button>
       </div>
       <div id="radiation-selector">
-        <button class="is-active menu-buttons fluor-phos-toggle"
-                id="fluoro">Fluoreszenz</button>
-        <button class="menu-buttons fluor-phos-toggle"
-                id="phosphor">Phosphoreszenz</button>
+        <button class="is-active menu-buttons fluor-phos-toggle" id="fluoro">Fluoreszenz</button>
+        <button class="menu-buttons fluor-phos-toggle" id="phosphor">Phosphoreszenz</button>
       </div>
       <div id="fluorophor-selector">
-        <select name="fluorophores"
-                id="fluorophores">
-                                    <option value="Texas Red">Texas Red</option>
-                    <option value="GFP">GFP</option>
-                    <option value="YFP">YFP</option>
-                    <option value="DAPI">DAPI</option>
-                </select>
+        <select name="fluorophores" id="fluorophores">
+          <option value="Texas Red">Texas Red</option>
+          <option value="GFP">GFP</option>
+          <option value="YFP">YFP</option>
+          <option value="DAPI">DAPI</option>
+        </select>
         <div>
-          <img id="fluorophor-selector_img"
-               src="images/Texas-Red.png">
+          <img id="fluorophor-selector_img" src="images/Texas-Red.png">
         </div>
       </div>
     </div>

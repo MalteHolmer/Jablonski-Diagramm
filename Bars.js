@@ -2,47 +2,53 @@
 
 class Bars {
 
-  constructor(posX, posY, width, height, amount = 5, radius = 1.25, step = 6, hitMargin = 1.2) {
-    this.posX = posX;
-    this.posY = posY;
-    this.width = width;
-    this.height = height;
-    this.amount = amount;
-    this.radius = radius; //Ecken-Radius der einzelnen Bars
-    this.step = step;
-    this.hitMargin = hitMargin; //prozentuale Verbreiterung der hitArea
-    this.container = new Container(); //PIXI.js-Container
+  /*
+    hitMargin - prozentuale Vergrößerung der Trefferfläche
+    step - Distanz zwichen Bars
+    amount - Anzahl der Bars
+    radius - Abrundungsgrad
+  */
+  constructor(posX, posY, width, height, hitMargin, step, amount = 5, radius = 1.25) {
+    //PIXI.js-Container
+    this.container = new Container();
 
-    this._createBars();
+    this._createBars(posX, posY, width, height, hitMargin, step, amount, radius);
   }
 
   //Helfer-Methode zum Bilden von Bars
-  _createBars() {
+  _createBars(posX, posY, width, height, hitMargin, step, amount, radius) {
     let bar;
 
-    for (let i = 0; i < this.amount; i++) {
+    //Erstelle die Bars und füge diese dem Container hinzu
+    for (let i = 0; i < amount; i++) {
       bar = new Graphics()
         .beginFill()
-        .drawRoundedRect(0, 0, this.width, this.height, this.radius)
+        .drawRoundedRect(0, 0, width, height, radius)
         .endFill();
 
+      //sorgt dafür, dass beim Skalieren mittig skaliert wird
       bar.pivot.x = bar.width / 2;
       bar.pivot.y = bar.height / 2;
-      bar.hitArea = new Rectangle(0, -this.height * this.hitMargin / 2, this.width, this.height * (1 + this.hitMargin));
 
-      //etwas unschön, sorgt jedoch dafür, das mittig skaliert wird, bei Aufruf von .scale
-      bar.y = this.step * Math.pow(i, 1.9) + bar.pivot.y;
+      //Verändert die Treffer-Fläche zum Aktivieren des "Hover-Effekts"
+      bar.hitArea = new Rectangle(0, -height * hitMargin / 2, width, height * (1 + hitMargin));
+
+      //einfache Funktion damit die Verteilung der Bars etwas an Jablosnki erinenrt ^^
+      bar.y = step * Math.pow(i, 1.9) + bar.pivot.y;
+      //Bars sollen mittig im Container liegen (+ bar.pivot.x damit der mittige pivot ausgeglichen wird)
       bar.x = 0 + bar.pivot.x;
 
       bar.interactive = true;
       this.container.addChild(bar);
     }
 
+    //Container an ausgewählte Position setzen
     this.container.interactive = true;
-    this.container.x = this.posX;
-    this.container.y = this.posY;
+    this.container.x = posX;
+    this.container.y = posY;
   }
 
+  //wählt randomisiert eine Bar aus und lifert diese zurück (convenience Method)
   getRandom() {
     return this.container.children[Math.floor(Math.random() * this.container.children.length)];
   }
